@@ -1,0 +1,21 @@
+# Ignore everything by default
+/*
+
+# Include all files in the project root folder
+!/*
+
+# Include the 'graph' subfolder and its files, but not its subdirectories
+!graph/
+graph/*/
+
+# Include the 'lua' subfolder and its files, but not its subdirectories
+!lua/
+lua/*/
+
+# Include the 'res' subfolder and all its files and subdirectories
+!res/
+
+# Ignore the __pycache__ folder and its contents
+__pycache__/
+.vscode/
+.git/
