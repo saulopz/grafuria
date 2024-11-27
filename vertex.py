@@ -4,7 +4,32 @@ from state import State
 from edge import Edge
 
 
+# -------------------------
+# Vertex Class
+# -------------------------
 class Vertex:
+    """
+    This class represents a Vertex on algorithm and it's representation
+    on application to draw on canvas.
+
+    Attributes
+    ----------
+    type int:
+        Identify element type in application.
+    id: int
+        Vertex identification ID.
+    app: App
+        Context of interface application.
+    canvas: tk.Canvas
+        Canvas to draw it element.
+    name: string
+        Name of vertex. Starts with a void string.
+    x, y: int
+        Position x, y on canvas.
+    state: int
+        State of edge while execution.
+    """
+
     id: int = 0  # id auto increment
     radius: int = 5
     width: int = 2
@@ -18,7 +43,6 @@ class Vertex:
         self.x: int = x
         self.y: int = y
         self.state: int = State.NONE
-        self.name = name
         if id == -1:
             Vertex.id = Vertex.id + 1
             self.id = Vertex.id
@@ -50,8 +74,14 @@ class Vertex:
         self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouseEnter)
         self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouseLeave)
 
+    # -------------------------
+    # Get JSON
+    # -------------------------
     def get_json(self) -> Dict[str, int]:
-        """Returns vertex information in JSON format."""
+        """
+        Returns the JSON object representing this vertex. Useful
+        for recording edge information into the graph file.
+        """
         return {
             "name": self.name,
             "id": self.id,
@@ -59,54 +89,96 @@ class Vertex:
             "y": self.y,
         }
 
+    # -------------------------
+    # Get ID
+    # -------------------------
     def get_id(self):
-        """Returns the object ID."""
+        """Returns the edge ID."""
         return self.id
 
+    # -------------------------
+    # Get Name
+    # -------------------------
     def get_name(self):
+        """Returns the name of vertex."""
         return self.name
 
+    # -------------------------
+    # Get Edge Size
+    # -------------------------
     def get_edge_size(self):
-        """Returns the number of vertex connections."""
+        """Returns the number of connections this vertex has."""
         return len(self.edge)
 
+    # -------------------------
+    # Get Edge
+    # -------------------------
     def get_edge(self, index: int):
         """Returns the edge at position index."""
         if index < 0 or index >= len(self.edge):
             return None
         return self.edge[index]
 
+    # -------------------------
+    # Get Adjacent
+    # -------------------------
     def get_adjacent(self, edge: Edge):
+        """
+        Returns the adjacent vertex that shares the connection
+        of the edge passed as a parameter.
+        """
         if not edge:
             return None
         if edge.get_a().get_id() == self.get_id():
             return edge.get_b()
         return edge.get_a()
 
+    # -------------------------
+    # Get Edge To
+    # -------------------------
     def get_edge_to(self, other: "Vertex") -> Union[Edge, None]:
+        """
+        Returns edge that connect this vertex with other,
+        passed by parameter, if exists this connection."
+        """
         for e in self.edge:
             v = self.get_adjacent(e)
             if other.id == v.id:
                 return e
         return None
 
-    # Return size of active connections of this vertex
+    # -------------------------
+    # Get Edge To
+    # -------------------------
     def get_active_edge_size(self):
+        """Return size of active connections of this vertex."""
         conn = 0
         for e in self.edge:
             if e.get_state() == State.ACTIVE:
                 conn += 1
         return conn
 
+    # -------------------------
+    # Get State
+    # -------------------------
     def get_state(self):
+        """Returns the state of this vertex."""
         return self.state
 
+    # -------------------------
+    # Set State
+    # -------------------------
     def set_state(self, state: int) -> None:
+        """Changes the state of this vertex."""
         self.state = state
         if self.app.animation:
             self.draw()
 
+    # -------------------------
+    # Draw
+    # -------------------------
     def draw(self) -> None:
+        """Draws the element on the screen. It is important when the state has changed."""
         if self.state == State.NONE:
             self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
         elif self.state == State.TESTING:
@@ -116,16 +188,22 @@ class Vertex:
         elif self.state == State.INVALID:
             self.canvas.itemconfig(self.canvas.id, fill=self.app.COLOR_INVALID)
 
-    # HANDLERS OF INTERFACE EVENTS ---------------------------------------------
-
+    # -------------------------
+    # On Mouse Enter
+    # -------------------------
     def mouseEnter(self, event: tk.Event) -> None:
+        """Event called when mouse is over vertex point, changing the vertex color."""
         if not self.app.editing:
             return
         if self.app.selected != None and self.app.selected == self:
             return
         self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
 
+    # -------------------------
+    # On Mouse Leave
+    # -------------------------
     def mouseLeave(self, event: tk.Event) -> None:
+        """Event called when mouse is out of vertex point, changing the vertex color."""
         if not self.app.editing:
             return
         if self.app.selected != None and self.app.selected == self:
@@ -133,7 +211,11 @@ class Vertex:
         else:
             self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
 
+    # -------------------------
+    # On Mouse Move
+    # -------------------------
     def mouseMove(self, event: tk.Event) -> None:
+        """Event called when you are moving a vertex to other position."""
         if not self.app.editing:
             return
         x = self.canvas.canvasx(event.x)
@@ -147,13 +229,11 @@ class Vertex:
         for e in self.edge:
             e.refresh()
 
-    def get_coords(self) -> Tuple[int, int]:
-        coords = self.canvas.coords(self.canvas_id)
-        x = coords[0] + (Vertex.radius * self.app.scale)
-        y = coords[1] + (Vertex.radius * self.app.scale)
-        return x, y
-
+    # -------------------------
+    # On Mouse Down
+    # -------------------------
     def mouseDown(self, event: tk.Event) -> None:
+        """Event called when mouse was clicked over this vertex."""
         if not self.app.editing:
             self.app.set_statusbar(f"Vertex: {self.id}")
             return
@@ -171,12 +251,28 @@ class Vertex:
         self.app.vertex_id.insert(0, self.id)
         self.app.vertex_id.config(state="readonly")
         self.app.vertex_name.delete(0, tk.END)
-        self.app.vertex_name.insert(
-            0, self.name
-        )  # Assume que o vértice tem um atributo 'name'
+        self.app.vertex_name.insert(0, self.name)
         self.app.show_config_frame(self.app.vertex_config_frame)
 
+    # -------------------------
+    # Get Coordinates
+    # -------------------------
+    def get_coords(self) -> Tuple[int, int]:
+        """Returns the relative coordinates of this vertex on canvas."""
+        coords = self.canvas.coords(self.canvas_id)
+        x = coords[0] + (Vertex.radius * self.app.scale)
+        y = coords[1] + (Vertex.radius * self.app.scale)
+        return x, y
+
+    # -------------------------
+    # Connect
+    # -------------------------
     def connect(self, event: tk.Event) -> None:
+        """
+        When this vertex is selected and you click with Mouse Button-1
+        in other vertex, you create a connection between this vertex and
+        other, represented by a new edge object.
+        """
         if self == self.app.selected:
             return
         if self.app.selected != None and self.app.selected.type == self.app.VERTEX:
@@ -188,7 +284,11 @@ class Vertex:
                 self.app.selected.edge.append(e)
                 self.app.edge.append(e)
 
+    # -------------------------
+    # Is Connected
+    # -------------------------
     def is_connected(self, other) -> bool:
+        """Verifies if this vertex has a connection with other, passed by parameter."""
         other_id = other.get_id()
         self_id = self.get_id()
 
@@ -202,16 +302,27 @@ class Vertex:
                 return True
         return False
 
+    # -------------------------
+    # Select
+    # -------------------------
     def select(self) -> None:
+        """Set this vertex as selected."""
         self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
 
+    # -------------------------
+    # Unselect
+    # -------------------------
     def unselect(self) -> None:
+        """Set this vertex as selected."""
         self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
 
+    # -------------------------
+    # Delete
+    # -------------------------
     def delete(self) -> None:
         """
-        Removes a Vertex. But it is necessary to delete all Edges connected
-        to it. The function has an auxiliary list, copied from the Edges
+        Removes a Vertex. But it is necessary to delete all connections.
+        The function has an auxiliary list, copied from the Edges
         list, to perform the iteration, because during the iteration the
         Edge can also ask the Vertex to delete it from the Vertex's Edges
         list. If this deletion is done and the iteration is being made in
@@ -223,6 +334,6 @@ class Vertex:
         for e in aux:
             e.delete()
         self.edge.clear()  # Clear the Edge list
-        self.app.vertex.remove(self)
         self.canvas.delete(str(self.canvas_id))  # Remove from canvas.
         self.canvas.delete(str(self.text_id))
+        self.app.vertex.remove(self)

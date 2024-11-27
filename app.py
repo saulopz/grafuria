@@ -13,7 +13,9 @@ from about import About
 from lupa import LuaRuntime
 from app_proxy import AppProxy
 
-
+# -------------------------
+# App Class
+# -------------------------
 class App(tk.Frame):
     """Defines the application class of graphic interface using Tkinter."""
 
@@ -784,6 +786,9 @@ class App(tk.Frame):
         if self.selected is not None:
             self.selected.delete()
             self.selected = None
+        if self.selected_edge is not None:
+            self.selected_edge.delete()
+            self.selected_edge = None
 
     # -------------------------
     # About
