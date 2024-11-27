@@ -13,6 +13,7 @@ from about import About
 from lupa import LuaRuntime
 from app_proxy import AppProxy
 
+
 # -------------------------
 # App Class
 # -------------------------
@@ -28,11 +29,10 @@ class App(tk.Frame):
     COLOR_BG_FAILED = "#ffaaaa"
     COLOR_BG_RUNNING = "#e8f0ff"  # "cyan"
 
-    COLOR_NONE = "gold" # "black" #"yellow"
-    COLOR_OVER = "blue" # "red"
-    COLOR_SELECTED = "black" #"blue"  # "gold3"
+    COLOR_NONE = "gold"  # "black" #"yellow"
+    COLOR_OVER = "blue"  # "red"
+    COLOR_SELECTED = "black"  # "blue"  # "gold3"
     COLOR_INVALID = "DarkOrange1"
-    
 
     # -------------------------
     # App Constructor
@@ -208,9 +208,7 @@ class App(tk.Frame):
 
         # Configuration frame on the right of the Canvas (fixed)
         self.config_frame = ttk.Frame(main_paned_window, width=200, relief=tk.SUNKEN)
-        main_paned_window.add(
-            self.config_frame, weight=0
-        )  # Weight 0 prevents resizing
+        main_paned_window.add(self.config_frame, weight=0)  # Weight 0 prevents resizing
 
         # Action button frame below the menu
         button_frame = tk.Frame(self.config_frame)
@@ -420,10 +418,10 @@ class App(tk.Frame):
         self.status_frame.pack(fill=tk.X)
 
         # Status information
-        #self.line_count_label = ttk.Label(self.status_frame, text="Lines: 0")
+        # self.line_count_label = ttk.Label(self.status_frame, text="Lines: 0")
         self.status_bar_info = ttk.Label(self.status_frame, text="Info: ")
 
-        #self.line_count_label.pack(side=tk.LEFT, padx=10)
+        # self.line_count_label.pack(side=tk.LEFT, padx=10)
         self.status_bar_info.pack(side=tk.LEFT, padx=10)
 
     # -------------------------
@@ -454,7 +452,6 @@ class App(tk.Frame):
         # Shows the selected frame, if any
         if frame_to_show:
             frame_to_show.pack(fill="x", padx=10, pady=5)
-
 
     # -------------------------
     # On Graph Clicked
@@ -824,10 +821,16 @@ class App(tk.Frame):
         )
         if path is None:
             return
-        with open(path.name, "w") as f:
-            f.write(self.get_graph())
+
+        graph_data = self.get_graph()
+        try:
+            graph_object = json.loads(graph_data)
+            with open(path.name, "w") as f:
+                json.dump(graph_object, f, indent=4)
             self.filename = path.name
             self.set_statusbar(self.filename)
+        except json.JSONDecodeError as e:
+            self.set_statusbar(f"Error trying to save file: {e}")
 
     # -------------------------
     # Save Log File
@@ -928,7 +931,9 @@ class App(tk.Frame):
             self.master.title(f"{self.title} : {name}")
             self.graph_label.config(text=name)
         except Exception as e:
-            messagebox.showinfo("Alert", f"File {filename} is corrupted or invalid. {e}")
+            messagebox.showinfo(
+                "Alert", f"File {filename} is corrupted or invalid. {e}"
+            )
             self.filename = ""
             self.set_statusbar("")
 
