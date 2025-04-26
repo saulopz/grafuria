@@ -7,6 +7,7 @@ from PIL import Image, ImageTk
 from vertex import *
 import json
 import time
+import webbrowser
 from threading import Thread
 from state import State
 from about import About
@@ -60,6 +61,7 @@ class App(tk.Frame):
         self.solved = False
         self.vertex = []
         self.edge = []
+        self.area = []
         self.master = master
         self.scale = 1.0
         self.master.title(f"{self.title}")
@@ -128,6 +130,31 @@ class App(tk.Frame):
         return self.vertex[index]
 
     # -------------------------
+    # Area Add
+    # -------------------------    
+    def area_add(self, x, y):
+        """
+        Add a new point in a area to create a poligonon.
+
+        Parameters
+        ----------
+        x, y: int
+            Position x, y of new point in area.
+        """
+        self.area.append((x, y))
+
+    # -------------------------
+    # Area Close
+    # -------------------------
+    def area_close(self):
+        """
+        Close the area poligon and create it.
+        """
+        area = self.area
+        self.canvas.create_polygon(*area, fill="lemon chiffon", outline="black", tag="area")
+        self.area = []
+
+    # -------------------------
     # Draw
     # -------------------------
     def draw(self) -> None:
@@ -162,7 +189,7 @@ class App(tk.Frame):
         file_menu.add_command(label="Exit", command=root.quit)
 
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
-        help_menu.add_command(label="Documentation")
+        help_menu.add_command(label="Documentation", command=self.open_documentation)
         help_menu.add_command(label="About", command=lambda: About(root))
 
         # Adding menus to the main menu
@@ -438,6 +465,18 @@ class App(tk.Frame):
             self.canvas.itemconfig(self.selected.text_id, text=name)
 
     # -------------------------
+    # Open Documentation Dialog
+    # -------------------------
+    def open_documentation(self):
+        """Open the GitHub project link after user confirmation."""
+        result = messagebox.askyesno(
+            "Open Documentation",
+            "This will open the project's GitHub page in your browser. Do you want to continue?",
+        )
+        if result:  # I fuser click "Yes"
+            webbrowser.open("https://github.com/saulopz/grafuria")
+
+    # -------------------------
     # Show Config Frame
     # -------------------------
     def show_config_frame(self, frame_to_show=None):
@@ -700,6 +739,7 @@ class App(tk.Frame):
             v.set_state(State.NONE)
         for e in self.edge:
             e.set_state(State.NONE)
+        self.canvas.delete("area")
         self.draw()
 
     # -------------------------

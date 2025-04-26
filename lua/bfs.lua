@@ -1,3 +1,5 @@
+dofile("lua/globals.lua")
+
 --- Represents a node in a tree structure.
 --- 
 --- A Node is used to store a reference to a vertex and the edge
@@ -9,7 +11,6 @@
 --- - `edge` (Edge): The edge connecting this node to its parent.
 --- - `parent` (Node): The parent node in the tree.
 ---
---- Example usage:
 ---@class BFSNode
 ---@field vertex Vertex The vertex represented by this node.
 ---@field edge Edge Connection to the parent
@@ -132,6 +133,8 @@ end
 --- Function main
 --- Run the BFS algorithm with a random origin and random destination.
 local function main()
+    -- Initializes the random number generator seed
+    math.randomseed(os.time())
     local vertex_size = app:get_vertex_size()
     -- Get random origin and destination vertex from graph
     local orig = app:get_vertex(math.random(1, vertex_size)):get_id()

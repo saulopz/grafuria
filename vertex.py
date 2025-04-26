@@ -14,7 +14,7 @@ class Vertex:
 
     Attributes
     ----------
-    type int:
+    type: int
         Identify element type in application.
     id: int
         Vertex identification ID.
@@ -102,6 +102,30 @@ class Vertex:
     def get_name(self):
         """Returns the name of vertex."""
         return self.name
+
+    # -------------------------
+    # Get X
+    # -------------------------
+    def get_x(self):
+        """Returns x of position"""
+        return self.x
+
+    # -------------------------
+    # Get Y
+    # -------------------------
+    def get_y(self):
+        """Returns y of position"""
+        return self.y
+
+    # -------------------------
+    # Get Coordinates
+    # -------------------------
+    def get_coords(self) -> Tuple[int, int]:
+        """Returns the relative coordinates of this vertex on canvas."""
+        coords = self.canvas.coords(self.canvas_id)
+        x = coords[0] + (Vertex.radius * self.app.scale)
+        y = coords[1] + (Vertex.radius * self.app.scale)
+        return x, y
 
     # -------------------------
     # Get Edge Size
@@ -253,16 +277,6 @@ class Vertex:
         self.app.vertex_name.delete(0, tk.END)
         self.app.vertex_name.insert(0, self.name)
         self.app.show_config_frame(self.app.vertex_config_frame)
-
-    # -------------------------
-    # Get Coordinates
-    # -------------------------
-    def get_coords(self) -> Tuple[int, int]:
-        """Returns the relative coordinates of this vertex on canvas."""
-        coords = self.canvas.coords(self.canvas_id)
-        x = coords[0] + (Vertex.radius * self.app.scale)
-        y = coords[1] + (Vertex.radius * self.app.scale)
-        return x, y
 
     # -------------------------
     # Connect

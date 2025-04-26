@@ -7,6 +7,12 @@ class VertexProxy:
 
     get_name = lambda self: self._vertex.get_name()
 
+    get_x = lambda self: self._vertex.get_x()
+
+    get_y = lambda self: self._vertex.get_y()
+
+    get_coords = lambda self: self._vertex.get_coords()
+
     get_state = lambda self: self._vertex.get_state()
 
     set_state = lambda self, state: self._vertex.set_state(state)

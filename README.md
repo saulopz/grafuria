@@ -22,7 +22,7 @@ $ python3 main.py gr=graphs/dodecaedron.json alg=lua/bfs.lua
 
 Or just type `./grafuria` and the parameters in sequence. (Linux)
 
-The parameters are optional and are used to open the program with a selected graph and/or a lua algorithm to be executed on the graph.
+The parameters are optional and are used to open the program with a selected graph and/or a Lua algorithm to be executed on the graph.
 
 If you choose to open a graph or algorithm in the already opened graphical interface, just click on the field next to __Graph__ to open a graph or on the field next to __Algorithm__ to open an algorithm.
 

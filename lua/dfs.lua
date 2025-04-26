@@ -116,6 +116,8 @@ end
 
 --- Function main
 local function main()
+    -- Initializes the random number generator seed
+    math.randomseed(os.time())
     local vertex_size = app:get_vertex_size()
     local orig = app:get_vertex(math.random(1, vertex_size)):get_id()
     local dest = app:get_vertex(math.random(1, vertex_size)):get_id()
