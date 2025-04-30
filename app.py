@@ -1024,3 +1024,4 @@ class App(tk.Frame):
         self.edge.clear()
         Edge.id = 0
         self.canvas.delete("all")
+        self.graph_label.config(text="Clique aqui")

@@ -263,8 +263,10 @@ class Vertex:
             return
         if self.app.selected != None:
             self.app.selected.unselect()
+            self.app.selected = None
         if self.app.selected_edge != None:
             self.app.selected_edge.unselect()
+            self.app.selected_edge = None
         self.select()
         self.app.selected = self
         self.x = self.canvas.canvasx(event.x)

@@ -1,6 +1,6 @@
 {
     "animation": true,
-    "deep": 5,
+    "deep": 7,
     "speed": 10,
     "logs_symbols": "$#"
 }

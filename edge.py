@@ -218,8 +218,10 @@ class Edge:
             return
         if self.app.selected_edge != None:
             self.app.selected_edge.unselect()
+            self.app.selected_edge = None
         if self.app.selected != None:
             self.app.selected.unselect()
+            self.app.selected = None
         self.select()
         self.app.selected_edge = self
         self.app.set_statusbar("Edge selected: " + str(self.id))
@@ -268,6 +270,8 @@ class Edge:
 
         print(f"deletando edge {self.id}")
         if not self.app.editing:
+            return
+        if not self in self.a.edge or not self in self.b.edge:
             return
         self.a.edge.remove(self)
         self.b.edge.remove(self)
