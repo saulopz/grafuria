@@ -21,17 +21,17 @@ class About:
 
         Label(
             self.dialog,
-            text="Version 0.1",
+            text="Version 1.0",
             font=("Arial", 10),
         ).pack()
 
         about_message = (
-            "This program is designed for the creation of graphs and the execution"
-            "of algorithms written in the Lua programming language on those graphs."
-            "It allows users to easily build directed and undirected graphs, assign"
-            "weights to edges, and name vertices. The software supports dynamic"
-            "interaction with the graph using Lua scripts, enabling the execution"
-            "of various algorithms to manipulate the graph's structure and behavior."
+            "This program is designed for creating graphs and executing algorithms"
+            "written in the Lua programming language on those graphs. It allows users"
+            "to easily build directed and undirected graphs, assign weights to edges,"
+            "and name vertices. The software supports dynamic interaction with graphs"
+            "through Lua scripts, enabling the execution of various algorithms to"
+            "manipulate the graph's structure and behavior."
         )
         tk.Label(
             self.dialog,
