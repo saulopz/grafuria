@@ -31,8 +31,8 @@ class VertexProxy:
     def get_adjacent(self, edge):
         adjacent = self._vertex.get_adjacent(
             edge._edge
-        )  # Gets real object from wrapper
-        return VertexProxy(self._app, adjacent)  # returns wrapper object
+        )  # Gets real object from proxy
+        return VertexProxy(self._app, adjacent)  # returns proxy object
 
     def get_edge_to(self, other):
         from edge_proxy import EdgeProxy
