@@ -17,7 +17,7 @@ It allows users to easily construct directed and undirected graphs and weight co
 ### Opening the Program via Command Line and Graphical Interface
 
 ```sh
-$ python3 main.py gr=graphs/dodecaedron.json alg=lua/bfs.lua
+$ python3 main.py graph=graphs/dodecaedron.json script=lua/bfs.lua
 ```
 
 Or just type `./grafuria` and the parameters in sequence. (Linux)
