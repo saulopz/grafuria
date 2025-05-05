@@ -1,4 +1,6 @@
 import os
+import locale
+from datetime import datetime
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
@@ -11,7 +13,7 @@ import webbrowser
 from threading import Thread
 from state import State
 from about import About
-from lupa import LuaRuntime
+from lupa import LuaRuntime, LuaError
 from app_proxy import AppProxy
 
 
@@ -56,8 +58,11 @@ class App(tk.Frame):
         self.var_log_symbols = ""
         self.title = "Grafuria"
         self.editing: bool = True
+        self.var_animation = tk.BooleanVar(value=True)
+        self.var_execution_time_log = tk.BooleanVar(value=True)
         self.load_configuration()
         self.bidirectional = False
+        self.execution_time = 0
         self.solved = False
         self.vertex = []
         self.edge = []
@@ -100,11 +105,11 @@ class App(tk.Frame):
         return self.deep
 
     # -------------------------
-    # Get Animation
+    # Set Execution Time
     # -------------------------
-    def get_animmation(self):
-        """Returns if program needs animate algorithm execution."""
-        return self.animation
+    def set_execution_time(self, time):
+        """Set the execution time of algorithm."""
+        self.execution_time = time
 
     # -------------------------
     # Set Solved
@@ -303,7 +308,6 @@ class App(tk.Frame):
         animation_frame = ttk.Frame(self.config_frame)
         animation_frame.pack(fill="x", padx=10, pady=0)
         tk.Label(animation_frame, text="Animation:").pack(side="left", pady=0)
-        self.var_animation = tk.BooleanVar(value=True)
         self.animation = tk.Checkbutton(
             animation_frame,
             variable=self.var_animation,
@@ -312,6 +316,19 @@ class App(tk.Frame):
             command=self.on_animation_change,
         )
         self.animation.pack(side="right")
+
+        # Control for "Execution Time Log"
+        execution_time_log_frame = ttk.Frame(self.config_frame)
+        execution_time_log_frame.pack(fill="x", padx=10, pady=0)
+        tk.Label(execution_time_log_frame, text="Exec time log:").pack(side="left", pady=0)
+        self.execution_time_log = tk.Checkbutton(
+            execution_time_log_frame,
+            variable=self.var_execution_time_log,
+            onvalue=True,
+            offvalue=False,
+            command=self.on_execution_time_log_change,
+        )
+        self.execution_time_log.pack(side="right")
 
         # Control for "Bidirectional"
         bidirectional_frame = ttk.Frame(self.config_frame)
@@ -555,6 +572,13 @@ class App(tk.Frame):
         """Changes variable that controls animation."""
         self.save_configuration()
         self.animation = self.var_animation.get()
+    
+    # -------------------------
+    # On Execution Time Log
+    # -------------------------
+    def on_execution_time_log_change(self):
+        self.save_configuration()
+        self.execution_time_log = self.var_execution_time_log.get()
 
     # -------------------------
     # On Edge Weight Change
@@ -666,18 +690,19 @@ class App(tk.Frame):
     def lua_execute(self):
         """Executes a script lua if loaded"""
         try:
-            self.lua = LuaRuntime(unpack_returned_tuples=True)
-            app_wrapper = AppProxy(self)
-            self.lua.globals().State = {
+            lua = LuaRuntime(unpack_returned_tuples=True)
+            app_proxy = AppProxy(self)
+            lua.globals().State = {
                 "NONE": State.NONE,
                 "TESTING": State.TESTING,
                 "ACTIVE": State.ACTIVE,
                 "INVALID": State.INVALID,
             }
-            self.lua.globals().app = app_wrapper
+            lua.globals().app = app_proxy
             with open(self.script_lua, "r") as file:
                 lua_script = file.read()
-            self.lua.execute(lua_script)
+            lua.execute(lua_script)
+            self.save_execution_history()
         except Exception as e:
             self.log(str(e), True)
         if self.solved:
@@ -686,6 +711,25 @@ class App(tk.Frame):
             self.canvas.configure(bg=App.COLOR_BG_FAILED)
         if not self.animation:
             self.draw()
+
+    # -------------------------
+    # Save Execution History
+    # -------------------------
+    def save_execution_history(self):
+        if not self.var_execution_time_log.get():
+            return
+        try:
+            file_path = "execution_history.cvs"
+            graph = os.path.basename(self.filename)
+            script = os.path.basename(self.script_lua)
+            # locale.setlocale(locale.LC_NUMERIC, "pt_BR.UTF-8")
+            timestamp = datetime.now().strftime("%Y-%m-%d\t%H:%M:%S")
+            execution_time = locale.format_string("%.4f", self.execution_time, grouping=True)
+
+            with open(file_path, "a") as f:
+                f.write(f"{timestamp}\t{graph}\t{script}\t{execution_time}\t{self.solved}\n")
+        except Exception as e:
+            self.status_bar_info.config(text=f"Error saving execution history: {e}")
 
     # -------------------------
     # Show Error Alert
@@ -708,8 +752,9 @@ class App(tk.Frame):
         0 to 10, with the value 10 having no SLEEP. This value is
         adjusted in the graphical interface.
         """
-        if self.get_speed() < 10:
-            t = (self.get_speed_max() - self.get_speed()) / 10
+        speed = self.get_speed()
+        if speed < 10:
+            t = (self.get_speed_max() - speed) ** 2 / 100
             time.sleep(t)
 
     # -------------------------
@@ -987,6 +1032,7 @@ class App(tk.Frame):
             "deep": self.var_deep.get(),
             "speed": self.var_speed.get(),
             "logs_symbols": self.var_logs_field.get(),
+            "execution_time_log": self.var_execution_time_log.get(),
         }
         with open(self.config_file, "w") as f:
             json.dump(config, f, indent=4)
@@ -999,15 +1045,19 @@ class App(tk.Frame):
         if os.path.exists(self.config_file):
             with open(self.config_file, "r") as f:
                 j = json.load(f)
-                self.animation = j.get("animation", True)
+                self.var_animation.set(j.get("animation", True))
+                self.animation = self.var_animation.get()
                 self.deep = j.get("deep", 3)
                 self.speed = j.get("speed", 10)
+                self.var_execution_time_log.set(j.get("execution_time_log", False))
+                self.execution_time_log = self.var_execution_time_log.get()
                 self.var_log_symbols = j.get("logs_symbols", "")
         else:
             self.bidirectional = True
             self.animation = True
             self.deep = 5
             self.speed = 10
+            self.execution_time_log = False
             self.var_log_symbols = ""
 
     # -------------------------

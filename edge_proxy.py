@@ -13,6 +13,11 @@ class EdgeProxy:
 
     set_state = lambda self, state: self._edge.set_state(state)
 
+    def get_adjacent(self, vertex):
+        from vertex_proxy import VertexProxy
+
+        return self._edge.get_adjacent(vertex._vertex)
+
     def get_a(self):
         from vertex_proxy import VertexProxy
 

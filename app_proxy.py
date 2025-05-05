@@ -11,6 +11,8 @@ class AppProxy:
 
     area_close = lambda self: self._app.area_close()
 
+    set_execution_time = lambda self, time: self._app.set_execution_time(time)
+
     set_solved = lambda self, solved: self._app.set_solved(solved)
 
     is_stopped = lambda self: self._app.is_stopped()

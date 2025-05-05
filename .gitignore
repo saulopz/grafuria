@@ -4,6 +4,9 @@
 # Include all files in the project root folder
 !/*
 
+# Ignore
+/*.cvs
+
 # Include the 'graph' subfolder and its files, but not its subdirectories
 !graph/
 graph/*/

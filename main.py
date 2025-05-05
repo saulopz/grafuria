@@ -5,6 +5,10 @@
 Main program for Grafuria.
 
 Author: Saulo Popov Zambiasi
+Updated: 2025-05-05
+Email: saulopz@gmail.com
+GitHub: https://github.com/saulopz/grafuria
+
 License: BSD 3-Clause License
 
 This program is designed for the creation of graphs and the execution
@@ -31,6 +35,7 @@ import sys
 from app import App
 import tkinter as tk
 
+
 # -------------------------
 # Main
 # -------------------------
@@ -40,18 +45,18 @@ def main():
 
     Arguments
     ---------
-    gr: str
+    graph: str
         graph path and filename.
-    alg: str
-        algorithm path and filename.
+    script: str
+        script path and filename.
     """
     args = sys.argv[1:]
     graph: str = ""
     algorithm: str = ""
     for arg in args:
-        if arg.startswith("gr="):
+        if arg.startswith("graph="):
             graph = arg.split("=", 1)[1]
-        elif arg.startswith("alg="):
+        elif arg.startswith("script="):
             algorithm = arg.split("=", 1)[1]
 
     root = tk.Tk()

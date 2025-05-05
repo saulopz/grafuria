@@ -146,7 +146,7 @@ class Vertex:
     # -------------------------
     # Get Adjacent
     # -------------------------
-    def get_adjacent(self, edge: Edge):
+    def get_adjacent(self, edge: Edge) -> "Vertex":
         """
         Returns the adjacent vertex that shares the connection
         of the edge passed as a parameter.

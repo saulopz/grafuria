@@ -128,6 +128,21 @@ class Edge:
         return self.id
 
     # -------------------------
+    # Get Adjacent
+    # -------------------------
+    def get_adjacent(self, vertex: "Vertex"):
+        """
+        Returns the adjacent vertex of this edge. If the vertex
+        passed as parameter is not connected to this edge, it returns None.
+        """
+        if self.a == vertex:
+            return self.b
+        elif self.b == vertex:
+            return self.a
+        else:
+            return None
+
+    # -------------------------
     # Get A
     # -------------------------
     def get_a(self):
