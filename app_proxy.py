@@ -21,6 +21,11 @@ class AppProxy:
 
     get_deep = lambda self: self._app.get_deep()
 
+    # get_var = lambda self: self._app.get_var(var_name)
+
+    def get_var(self, var_name):
+        return self._app.get_var(var_name)
+
     step = lambda self: self._app.step()
 
     get_vertex = lambda self, index: VertexProxy(

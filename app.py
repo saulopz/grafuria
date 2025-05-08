@@ -6,15 +6,16 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import asksaveasfile, askopenfilename
 from PIL import Image, ImageTk
-from vertex import *
+from vertex import Vertex, Edge
 import json
 import time
 import webbrowser
 from threading import Thread
 from state import State
 from about import About
-from lupa import LuaRuntime, LuaError
+from lupa import LuaRuntime
 from app_proxy import AppProxy
+from properties import Properties
 
 
 # -------------------------
@@ -54,6 +55,8 @@ class App(tk.Frame):
         """
         super().__init__(master)
         self.script_lua = script_lua
+        self.script_properties = None
+        self.script_properties_frame = None
         self.config_file = "settings.json"
         self.var_log_symbols = ""
         self.title = "Grafuria"
@@ -80,6 +83,9 @@ class App(tk.Frame):
         if filename != "":
             self.load_graph_file(filename)
         if self.script_lua != "":
+            self.script_properties = Properties(
+                self.script_properties_frame, self.script_lua
+            )
             name = os.path.splitext(os.path.basename(self.script_lua))[0]
             self.script_label.config(text=name)
 
@@ -96,13 +102,6 @@ class App(tk.Frame):
     def get_speed(self):
         """Returns the speed of algorithm execution."""
         return self.speed
-
-    # -------------------------
-    # Get Deep
-    # -------------------------
-    def get_deep(self):
-        """Returns deep of BFS tree."""
-        return self.deep
 
     # -------------------------
     # Set Execution Time
@@ -136,7 +135,7 @@ class App(tk.Frame):
 
     # -------------------------
     # Area Add
-    # -------------------------    
+    # -------------------------
     def area_add(self, x, y):
         """
         Add a new point in a area to create a poligonon.
@@ -156,7 +155,9 @@ class App(tk.Frame):
         Close the area poligon and create it.
         """
         area = self.area
-        self.canvas.create_polygon(*area, fill="lemon chiffon", outline="black", tag="area")
+        self.canvas.create_polygon(
+            *area, fill="lemon chiffon", outline="black", tag="area"
+        )
         self.area = []
 
     # -------------------------
@@ -289,17 +290,17 @@ class App(tk.Frame):
         graph_frame.pack(fill="x", padx=10, pady=5)
         tk.Label(graph_frame, text="Graph:").pack(side="left")
         self.graph_label = tk.Label(
-            graph_frame, text="Clique aqui", relief="sunken", width=20, anchor="w"
+            graph_frame, text="Click here", relief="sunken", width=20, anchor="w"
         )
         self.graph_label.pack(side="right", fill="x")
         self.graph_label.bind("<Button-1>", self.on_graph_click)
 
-        # Control for "Algoritmo"
+        # Control for "Script"
         script_frame = ttk.Frame(self.config_frame)
         script_frame.pack(fill="x", padx=10, pady=5)
-        tk.Label(script_frame, text="Algorithm:").pack(side="left")
+        tk.Label(script_frame, text="Script:").pack(side="left")
         self.script_label = tk.Label(
-            script_frame, text="Clique aqui", relief="sunken", width=20, anchor="w"
+            script_frame, text="Click here", relief="sunken", width=20, anchor="w"
         )
         self.script_label.pack(side="right", fill="x")
         self.script_label.bind("<Button-1>", self.on_script_click)
@@ -320,7 +321,9 @@ class App(tk.Frame):
         # Control for "Execution Time Log"
         execution_time_log_frame = ttk.Frame(self.config_frame)
         execution_time_log_frame.pack(fill="x", padx=10, pady=0)
-        tk.Label(execution_time_log_frame, text="Exec time log:").pack(side="left", pady=0)
+        tk.Label(execution_time_log_frame, text="Exec time log:").pack(
+            side="left", pady=0
+        )
         self.execution_time_log = tk.Checkbutton(
             execution_time_log_frame,
             variable=self.var_execution_time_log,
@@ -343,22 +346,6 @@ class App(tk.Frame):
             command=self.on_bidirectional_change,
         )
         self.chk_bidirectional.pack(side="right")
-
-        # Control for "Deep"
-        deep_frame = ttk.Frame(self.config_frame)
-        deep_frame.pack(fill="x", padx=10, pady=0)
-        tk.Label(deep_frame, text="Deep:").pack(side="left", pady=0)
-        self.var_deep = tk.IntVar(value=self.deep)
-        self.scale_deep = tk.Scale(
-            deep_frame,
-            from_=3,
-            to=20,
-            variable=self.var_deep,
-            orient="horizontal",
-            length=150,
-            command=lambda value: self.on_deep_change(value),
-        )
-        self.scale_deep.pack(side="right", fill="x")
 
         # Control for "Speed"
         speed_frame = ttk.Frame(self.config_frame)
@@ -388,10 +375,17 @@ class App(tk.Frame):
         self.load_configuration()
 
         # Separator -----------------------------------------------------------
-        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=5)
+
+        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
+
+        self.script_properties_frame = ttk.Frame(self.config_frame)
+        self.script_properties_frame.pack(fill="x", anchor="nw", expand=True, padx=5, pady=0)
+
+        # Separator -----------------------------------------------------------
+        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=0)
 
         self.dynamic_config_frame = ttk.Frame(self.config_frame)
-        self.dynamic_config_frame.pack(padx=5, pady=5)
+        self.dynamic_config_frame.pack(padx=0, pady=0)
 
         # Frame for vertex settings
         self.vertex_config_frame = ttk.Frame(self.dynamic_config_frame)
@@ -572,7 +566,7 @@ class App(tk.Frame):
         """Changes variable that controls animation."""
         self.save_configuration()
         self.animation = self.var_animation.get()
-    
+
     # -------------------------
     # On Execution Time Log
     # -------------------------
@@ -628,14 +622,6 @@ class App(tk.Frame):
                     tags="edge",
                 )
         self.draw()
-
-    # -------------------------
-    # On Deep Change
-    # -------------------------
-    def on_deep_change(self, value):
-        """When changes deep of BSF, salve configuration file."""
-        self.save_configuration()
-        self.deep = int(value)
 
     # -------------------------
     # On Speed Change
@@ -713,6 +699,15 @@ class App(tk.Frame):
             self.draw()
 
     # -------------------------
+    # Get Var
+    # -------------------------
+    def get_var(self, var_name):
+        """Returns a configuration variable to lua script."""
+        if self.script_properties:
+            return self.script_properties.get_attr(var_name)
+        return None
+
+    # -------------------------
     # Save Execution History
     # -------------------------
     def save_execution_history(self):
@@ -724,10 +719,14 @@ class App(tk.Frame):
             script = os.path.basename(self.script_lua)
             # locale.setlocale(locale.LC_NUMERIC, "pt_BR.UTF-8")
             timestamp = datetime.now().strftime("%Y-%m-%d\t%H:%M:%S")
-            execution_time = locale.format_string("%.4f", self.execution_time, grouping=True)
+            execution_time = locale.format_string(
+                "%.4f", self.execution_time, grouping=True
+            )
 
             with open(file_path, "a") as f:
-                f.write(f"{timestamp}\t{graph}\t{script}\t{execution_time}\t{self.solved}\n")
+                f.write(
+                    f"{timestamp}\t{graph}\t{script}\t{execution_time}\t{self.solved}\n"
+                )
         except Exception as e:
             self.status_bar_info.config(text=f"Error saving execution history: {e}")
 
@@ -966,6 +965,9 @@ class App(tk.Frame):
         if filename:
             if os.path.isfile(filename):
                 self.script_lua = filename  # Atualiza o caminho do script
+                self.script_properties = Properties(
+                    self.script_properties_frame, self.script_lua
+                )
             else:
                 print("Error: File not found.")
         else:
@@ -1029,7 +1031,6 @@ class App(tk.Frame):
         """Save configuration file."""
         config = {
             "animation": self.var_animation.get(),
-            "deep": self.var_deep.get(),
             "speed": self.var_speed.get(),
             "logs_symbols": self.var_logs_field.get(),
             "execution_time_log": self.var_execution_time_log.get(),
@@ -1047,7 +1048,6 @@ class App(tk.Frame):
                 j = json.load(f)
                 self.var_animation.set(j.get("animation", True))
                 self.animation = self.var_animation.get()
-                self.deep = j.get("deep", 3)
                 self.speed = j.get("speed", 10)
                 self.var_execution_time_log.set(j.get("execution_time_log", False))
                 self.execution_time_log = self.var_execution_time_log.get()
@@ -1055,7 +1055,6 @@ class App(tk.Frame):
         else:
             self.bidirectional = True
             self.animation = True
-            self.deep = 5
             self.speed = 10
             self.execution_time_log = False
             self.var_log_symbols = ""
