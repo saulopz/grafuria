@@ -5,7 +5,8 @@
 Main program for Grafuria.
 
 Author: Saulo Popov Zambiasi
-Updated: 2025-05-05
+Created : 2024-10-25
+Last Updated: 2025-05-05
 Email: saulopz@gmail.com
 GitHub: https://github.com/saulopz/grafuria
 

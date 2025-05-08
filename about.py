@@ -13,7 +13,7 @@ class About:
 
         tk.Label(
             self.dialog,
-            text=f"{app.title()}",
+            text="Grafuria",
             wraplength=300,
             justify="center",
             font=("Arial", 12, "bold"),

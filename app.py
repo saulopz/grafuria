@@ -245,7 +245,11 @@ class App(tk.Frame):
 
         # Action button frame below the menu
         button_frame = tk.Frame(self.config_frame)
-        button_frame.pack(fill=tk.X)
+        button_frame.pack(fill=tk.X, padx=2)
+
+        # Separator -----------------------------------------------------------
+
+        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
 
         # Loading button icons
         self.icon_play = ImageTk.PhotoImage(
@@ -347,21 +351,36 @@ class App(tk.Frame):
         )
         self.chk_bidirectional.pack(side="right")
 
-        # Control for "Speed"
+        # Control for "Speed" ------------------------------------
+
         speed_frame = ttk.Frame(self.config_frame)
         speed_frame.pack(fill="x", padx=10, pady=0)
         tk.Label(speed_frame, text="Speed:").pack(side="left", pady=0)
         self.var_speed = tk.IntVar(value=self.speed)
-        self.scale_speed = tk.Scale(
+
+        def on_speed_change(value):
+            """When change speed, salve configuration file."""
+            self.save_configuration()
+            self.speed = int(value)
+            self.label_valor.config(text=f"{self.scale_speed.get()}")
+
+        speed_scale = self.scale_speed = tk.Scale(
             speed_frame,
             from_=1,
             to=10,
             variable=self.var_speed,
             orient="horizontal",
             length=150,
-            command=lambda value: self.on_speed_change(value),
+            showvalue=False,
+            command=on_speed_change,
         )
         self.scale_speed.pack(side="right", fill="x")
+
+        self.label_valor = tk.Label(speed_frame, text=f"{speed_scale.get()}")
+        self.label_valor.pack(side="right", padx=1)
+
+        # ------------------------------------------------------
+        
 
         logs_frame = ttk.Frame(self.config_frame)
         logs_frame.pack(fill="x", padx=10, pady=5)
@@ -378,22 +397,29 @@ class App(tk.Frame):
 
         ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
 
-        self.script_properties_frame = ttk.Frame(self.config_frame)
-        self.script_properties_frame.pack(fill="x", anchor="nw", expand=True, padx=5, pady=0)
+        self.bottom_config_container = ttk.Frame(self.config_frame)
+        self.bottom_config_container.pack(fill="both", expand=True, padx=2, pady=0)
+
+        self.script_properties_frame = ttk.Frame(self.bottom_config_container)
+        self.script_properties_frame.pack(fill="x", anchor="nw", padx=5, pady=(0, 5))
 
         # Separator -----------------------------------------------------------
-        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=0)
 
-        self.dynamic_config_frame = ttk.Frame(self.config_frame)
-        self.dynamic_config_frame.pack(padx=0, pady=0)
+        ttk.Separator(self.bottom_config_container, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
+
+        self.dynamic_config_frame = ttk.Frame(self.bottom_config_container)
+        self.dynamic_config_frame.pack(fill="both", anchor="nw", expand=True, padx=2, pady=0)
 
         # Frame for vertex settings
         self.vertex_config_frame = ttk.Frame(self.dynamic_config_frame)
 
         # Title
-        tk.Label(self.vertex_config_frame, text="Vertex Settings").pack(
-            anchor="w", pady=2
-        )
+        tk.Label(
+            self.vertex_config_frame,
+            text="Vertex Settings",
+            font=("Segoe UI", 10, "bold"),
+            anchor="w"
+        ).pack(anchor="w", pady=2)
 
         # Line for vertex "ID"
         vertex_id_frame = ttk.Frame(self.vertex_config_frame)
@@ -417,7 +443,12 @@ class App(tk.Frame):
         self.edge_config_frame = ttk.Frame(self.dynamic_config_frame)
 
         # Title
-        tk.Label(self.edge_config_frame, text="Edge Settings").pack(anchor="w", pady=2)
+        tk.Label(
+            self.edge_config_frame,
+            text="Edge Settings",
+            font=("Segoe UI", 10, "bold"),
+            anchor="w"
+        ).pack(anchor="w", pady=2)
 
         # Line for edge "ID"
         edge_id_frame = ttk.Frame(self.edge_config_frame)
@@ -622,14 +653,6 @@ class App(tk.Frame):
                     tags="edge",
                 )
         self.draw()
-
-    # -------------------------
-    # On Speed Change
-    # -------------------------
-    def on_speed_change(self, value):
-        """When change speed, salve configuration file."""
-        self.save_configuration()
-        self.speed = int(value)
 
     # -------------------------
     # On Log Symbols Change

@@ -57,11 +57,8 @@ class Properties:
             anchor="w"
         ).grid(row=row, column=0, columnspan=2, sticky="w", pady=(4, 2), padx=(2, 2))
         row += 1
-
         self.frame.grid_columnconfigure(0, weight=1)
         self.frame.grid_columnconfigure(1, weight=1)
-
-        ttk.Separator(self.frame, orient="horizontal").grid(row=row, column=0, columnspan=2, sticky="ew", pady=(0, 5))
         row += 1
 
         for key, value in self.attr.items():
@@ -73,7 +70,7 @@ class Properties:
                 label = tk.Label(self.frame, text=key)
                 label.grid(row=row, column=0, sticky="w", padx=(0, 5))
                 cb = tk.Checkbutton(self.frame, variable=var, command=self.save)
-                cb.grid(row=row, column=1, sticky="w", padx=(2, 2))
+                cb.grid(row=row, column=1, sticky="e", padx=(2, 2))
                 self.attr[key] = var
                 row += 1
 
@@ -87,15 +84,21 @@ class Properties:
 
                     label = tk.Label(self.frame, text=key)
                     label.grid(row=row, column=0, sticky="w", padx=(0, 5))
+
                     scale = tk.Scale(
                         self.frame,
                         from_=min_val,
                         to=max_val,
                         orient="horizontal",
                         variable=var,
-                        command=lambda val, k=key, v=var: self.set_attr(k, v.get()) or self.save()
+                        showvalue=False,
+                        command=lambda val, k=key, v=var: self.set_attr(k, v.get()) or self.save() or scale_label_value.config(text=v.get())
                     )
                     scale.grid(row=row, column=1, sticky="ew")
+
+                    scale_label_value = tk.Label(self.frame, text=var.get())
+                    scale_label_value.grid(row=row, column=1, sticky="w", padx=(2, 10))
+
                     self.attr[key] = var
                     row += 1
                 else:

@@ -4,6 +4,12 @@ Author: Saulo Popov Zambiasi
 
 E-mail: saulopz@gmail.com
 
+Created : 2024-10-25
+
+Last Update: 2025-05-08
+
+Version: 1.0
+
 ## About
 
 This program is designed for creating graphs and executing algorithms written in the Lua programming language on them.
@@ -119,19 +125,60 @@ for i = 1, vsize do
 end
 ```
 
-### `app:get_deep() -> integer`:
+### `app:get_var(name) -> any`:
 
-Returns how deep you can go in some kind of algorithm, such as BFS for example.
+Returns the value of a attribute created with a configuration file of script.
 
 __Example__:
 
 ```lua
-local deep = app:get_deep()
+local deep = app:get_var("deep")
 while level <= deep do
     --
     level = level + 1
 end
 ```
+
+### 'app:set_var(name, value)`:
+
+Sets the value of a variable created with a configuration file of script.
+__Example__:
+
+```lua
+app:set_var("deep", 10)
+```
+
+### Script File Configuration
+
+We can create variables in the script configuration file, to be used in a Lua script. These variables are used to store information that we want to use in our algorithm.
+
+The configuration file is a JSON file, which is created in the same folder as the graph. The name of the configuration file must be the same as the graph name, but with the `.json` extension.
+
+For example:
+
+```json
+{
+    "deep": 5,
+    "name": "My Graph"
+}
+```
+The configuration file is loaded when the script is loaded and the interface create dinamically the visual vields for each variable. The name of the variable is the same as the key in the JSON file.
+The value of the variable can be a string, integer, float or boolean.
+
+If the variable is a integer and you want use with a range, you need create the variable name with myvar_min and myvar_max. The value of the variable will be the range of the variable.
+
+For example:
+
+```json
+{
+    "deep": 5,
+    "deep_min": 1,
+    "deep_max": 10
+}
+```
+
+And in the interface, the variable will be seen as a scale, with the range between 1 and 10. The value of the variable will be the value of the scale.
+
 
 ### `app:step()`:
 
