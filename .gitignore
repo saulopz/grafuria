@@ -22,3 +22,4 @@ lua/*/
 __pycache__/
 .vscode/
 .git/
+.idea/

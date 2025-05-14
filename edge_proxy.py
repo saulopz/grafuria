@@ -3,20 +3,26 @@ class EdgeProxy:
         self._app = app
         self._edge = edge
 
-    get_id = lambda self: self._edge.get_id()
+    def get_raw_edge(self):
+        return self._edge
 
-    set_weight = lambda self, w: self._edge.set_weight(w)
+    def get_id(self):
+        return self._edge.get_id()
 
-    get_weight = lambda self: self._edge.get_weight()
+    def set_weight(self, weight):
+        self._edge.set_weight(weight)
 
-    get_state = lambda self: self._edge.get_state()
+    def get_weight(self):
+        return self._edge.get_weight()
 
-    set_state = lambda self, state: self._edge.set_state(state)
+    def get_state(self):
+        return self._edge.get_state()
+
+    def set_state(self, state):
+        self._edge.set_state(state)
 
     def get_adjacent(self, vertex):
-        from vertex_proxy import VertexProxy
-
-        return self._edge.get_adjacent(vertex._vertex)
+        return self._edge.get_adjacent(vertex.get_raw_vertex())
 
     def get_a(self):
         from vertex_proxy import VertexProxy

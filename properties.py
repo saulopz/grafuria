@@ -1,7 +1,7 @@
 import os
 import json
 import tkinter as tk
-from tkinter import ttk
+
 
 # -------------------------
 # Properties class
@@ -17,7 +17,7 @@ class Properties:
         The frame where the properties are displayed.
     attr : dict
         The properties loaded from the JSON file.
-    fname : str
+    filename : str
         The name of the JSON file.
     name : str
         The name of the script file without extension.
@@ -34,9 +34,9 @@ class Properties:
         self.frame = frame
         self.attr = None
         name, extension = os.path.splitext(filename)
-        self.fname = name + ".json"
+        self.filename = name + ".json"
         self.name = os.path.splitext(os.path.basename(filename))[0]
-        print(self.fname)
+        print(self.filename)
         self.load()
         self.show()
 
@@ -177,11 +177,11 @@ class Properties:
         """
         Load the properties from a JSON file.
         """
-        if not os.path.exists(self.fname):
+        if not os.path.exists(self.filename):
             self.attr = {}  # ou algum default seguro
             return
         try:
-            with open(self.fname, "r", encoding="utf-8") as filename:
+            with open(self.filename, "r", encoding="utf-8") as filename:
                 self.attr = json.load(filename)
         except json.JSONDecodeError as e:
             print(f"JSON Error:'{self.attr}': {e}")
@@ -201,14 +201,14 @@ class Properties:
             else:
                 serializable[key] = value
         try:
-            with open(self.fname, "w", encoding="utf-8") as filename:
+            with open(self.filename, "w", encoding="utf-8") as filename:
                 json.dump(serializable, filename, indent=4)
         except json.JSONDecodeError as e:
             self.log(f"JSON Error:'{self.attr}': {e}")
         except FileNotFoundError:
-            self.log(f"File not found: {self.fname}")
+            self.log(f"File not found: {self.filename}")
         except PermissionError:
-            self.log(f"Permission denied: {self.fname}")
+            self.log(f"Permission denied: {self.filename}")
 
     # --------------------------
     # Clear

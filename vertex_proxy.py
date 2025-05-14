@@ -3,25 +3,38 @@ class VertexProxy:
         self._app = app
         self._vertex = vertex
 
-    get_id = lambda self: self._vertex.get_id()
+    def get_raw_vertex(self):
+        return self._vertex
 
-    get_name = lambda self: self._vertex.get_name()
+    def get_id(self):
+        return self._vertex.get_id()
 
-    get_x = lambda self: self._vertex.get_x()
+    def get_name(self):
+        return self._vertex.get_name()
 
-    get_y = lambda self: self._vertex.get_y()
+    def get_x(self):
+        return self._vertex.get_x()
 
-    get_coords = lambda self: self._vertex.get_coords()
+    def get_y(self):
+        self._vertex.get_y()
 
-    get_state = lambda self: self._vertex.get_state()
+    def get_coords(self):
+        return self._vertex.get_coords()
 
-    set_state = lambda self, state: self._vertex.set_state(state)
+    def get_state(self):
+        return self._vertex.get_state()
 
-    is_connected = lambda self, other: self._vertex.is_connected(other._other)
+    def set_state(self, state):
+        self._vertex.set_state(state)
 
-    get_edge_size = lambda self: self._vertex.get_edge_size()
+    def is_connected(self, other):
+        return self._vertex.is_connected(other.get_raw_vertex())
 
-    get_active_edge_size = lambda self: self._vertex.get_active_edge_size()
+    def get_edge_size(self):
+        return self._vertex.get_edge_size()
+
+    def get_active_edge_size(self):
+        return self._vertex.get_active_edge_size()
 
     def get_edge(self, index):
         from edge_proxy import EdgeProxy
@@ -29,11 +42,13 @@ class VertexProxy:
         return EdgeProxy(self._app, self._vertex.get_edge(index - 1))
 
     def get_adjacent(self, edge):
-        # Gets real object from proxy
-        adjacent = self._vertex.get_adjacent(edge._edge)  
-        return VertexProxy(self._app, adjacent)  # returns proxy object
+        adjacent = self._vertex.get_adjacent(edge.get_raw_edge())
+        return VertexProxy(self._app, adjacent)
 
     def get_edge_to(self, other):
         from edge_proxy import EdgeProxy
 
-        return EdgeProxy(self._app, self._vertex.get_edge_to(other._vertex))
+        edge = self._vertex.get_edge_to(other.get_raw_vertex())
+        if edge is None:
+            return None
+        return EdgeProxy(self._app, edge)

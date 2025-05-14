@@ -39,6 +39,8 @@ class Vertex:
         self.app = app
         self.canvas: tk.Canvas = self.app.canvas
         self.edge: List[Edge] = []
+        self.neighbor = {}
+        self.active_edges = 0
         self.name: str = name
         self.x: int = x
         self.y: int = y
@@ -57,7 +59,7 @@ class Vertex:
             self.y + Vertex.radius,
             width=Vertex.width,
             fill=self.app.COLOR_NONE,
-            tag="vertex",
+            tags="vertex",
         )
         self.text_id = self.canvas.create_text(
             self.x,
@@ -65,14 +67,14 @@ class Vertex:
             text=self.name,
             anchor="center",
             font=("Arial", 12),
-            tag="text",
+            tags="text",
         )
         self.canvas.tag_raise(self.canvas_id)
-        self.canvas.tag_bind(self.canvas_id, "<Button-1>", self.mouseDown)
+        self.canvas.tag_bind(self.canvas_id, "<Button-1>", self.mouse_down)
         self.canvas.tag_bind(self.canvas_id, "<Button-3>", self.connect)
-        self.canvas.tag_bind(self.canvas_id, "<B1-Motion>", self.mouseMove)
-        self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouseEnter)
-        self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouseLeave)
+        self.canvas.tag_bind(self.canvas_id, "<B1-Motion>", self.mouse_move)
+        self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouse_enter)
+        self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouse_leave)
 
     # -------------------------
     # Get JSON
@@ -163,24 +165,45 @@ class Vertex:
     def get_edge_to(self, other: "Vertex") -> Union[Edge, None]:
         """
         Returns edge that connect this vertex with other,
-        passed by parameter, if exists this connection."
+        passed by parameter, if exists this connection.
+
+        Parameters
+        ----------
+        other : Vertex
+            Other vertex to detect connection.
+
+        Return
+        ------
+        edge: Edge
+            Returns the edge of connection. None if not exists.
         """
-        for e in self.edge:
-            v = self.get_adjacent(e)
-            if other.id == v.id:
-                return e
-        return None
+        return self.neighbor.get(other.get_id())
 
     # -------------------------
     # Get Edge To
     # -------------------------
-    def get_active_edge_size(self):
+    def get_active_edge_size(self) -> int:
         """Return size of active connections of this vertex."""
-        conn = 0
-        for e in self.edge:
-            if e.get_state() == State.ACTIVE:
-                conn += 1
-        return conn
+        return self.active_edges
+
+    # -------------------------
+    # Change Active Edge
+    # -------------------------
+    def change_active_edge(self, edge, state):
+        """
+        Update active edge count if the edge state changes — avoids
+        extra loops.
+        Parameters
+        ----------
+        edge: Edge
+            Edge to avaliate if is valid to change active edges.
+        state: State
+            New state to chage.
+        """
+        if edge.get_state() != State.ACTIVE and state == State.ACTIVE:
+            self.active_edges += 1
+        if edge.get_state() == State.ACTIVE and state != State.ACTIVE:
+            self.active_edges -= 1
 
     # -------------------------
     # Get State
@@ -202,43 +225,64 @@ class Vertex:
     # Draw
     # -------------------------
     def draw(self) -> None:
-        """Draws the element on the screen. It is important when the state has changed."""
+        """
+        Draws the element on the screen. It is important when the state
+        has changed.
+        """
         if self.state == State.NONE:
             self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
         elif self.state == State.TESTING:
             self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
         elif self.state == State.ACTIVE:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_SELECTED,
+            )
         elif self.state == State.INVALID:
-            self.canvas.itemconfig(self.canvas.id, fill=self.app.COLOR_INVALID)
+            self.canvas.itemconfig(
+                self.canvas.id,
+                fill=self.app.COLOR_INVALID,
+            )
 
     # -------------------------
     # On Mouse Enter
     # -------------------------
-    def mouseEnter(self, event: tk.Event) -> None:
-        """Event called when mouse is over vertex point, changing the vertex color."""
+    def mouse_enter(self, event: tk.Event) -> None:
+        """
+        Event called when mouse is over vertex point,
+        changing the vertex color.
+        """
         if not self.app.editing:
             return
-        if self.app.selected != None and self.app.selected == self:
+        if self.app.selected is not None and self.app.selected == self:
             return
         self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
 
     # -------------------------
     # On Mouse Leave
     # -------------------------
-    def mouseLeave(self, event: tk.Event) -> None:
-        """Event called when mouse is out of vertex point, changing the vertex color."""
+    def mouse_leave(self, event: tk.Event) -> None:
+        """
+        Event called when mouse is out of vertex point,
+        changing the vertex color.
+        """
         if not self.app.editing:
             return
-        if self.app.selected != None and self.app.selected == self:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
+        if self.app.selected is not None and self.app.selected == self:
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_SELECTED,
+            )
         else:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_NONE,
+            )
 
     # -------------------------
     # On Mouse Move
     # -------------------------
-    def mouseMove(self, event: tk.Event) -> None:
+    def mouse_move(self, event: tk.Event) -> None:
         """Event called when you are moving a vertex to other position."""
         if not self.app.editing:
             return
@@ -256,15 +300,15 @@ class Vertex:
     # -------------------------
     # On Mouse Down
     # -------------------------
-    def mouseDown(self, event: tk.Event) -> None:
+    def mouse_down(self, event: tk.Event) -> None:
         """Event called when mouse was clicked over this vertex."""
         if not self.app.editing:
             self.app.set_statusbar(f"Vertex: {self.id}")
             return
-        if self.app.selected != None:
+        if self.app.selected is not None:
             self.app.selected.unselect()
             self.app.selected = None
-        if self.app.selected_edge != None:
+        if self.app.selected_edge is not None:
             self.app.selected_edge.unselect()
             self.app.selected_edge = None
         self.select()
@@ -291,11 +335,14 @@ class Vertex:
         """
         if self == self.app.selected:
             return
-        if self.app.selected != None and self.app.selected.type == self.app.VERTEX:
+        selected = self.app.selected
+        if selected is not None and self.app.selected.type == self.app.VERTEX:
             if not self.is_connected(self.app.selected):
                 e = Edge(self.app.selected, self, 1, self.app)
                 e.a = self
                 e.b = self.app.selected
+                e.b.neighbor[e.a.get_id()] = e
+                e.a.neighbor[e.b.get_id()] = e
                 self.edge.append(e)
                 self.app.selected.edge.append(e)
                 self.app.edge.append(e)
@@ -304,7 +351,10 @@ class Vertex:
     # Is Connected
     # -------------------------
     def is_connected(self, other) -> bool:
-        """Verifies if this vertex has a connection with other, passed by parameter."""
+        """
+        Verifies if this vertex has a connection with other, passed
+        by parameter.
+        """
         other_id = other.get_id()
         self_id = self.get_id()
 
@@ -350,6 +400,7 @@ class Vertex:
         for e in aux:
             e.delete()
         self.edge.clear()  # Clear the Edge list
+        self.neighbor.clear()
         self.canvas.delete(str(self.canvas_id))  # Remove from canvas.
         self.canvas.delete(str(self.text_id))
         self.app.vertex.remove(self)

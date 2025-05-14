@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from vertex import Vertex
 
+
 # -------------------------
 # Edge Class
 # -------------------------
@@ -65,10 +66,10 @@ class Edge:
         self.weight: float = w  # Connection weight
         self.state: int = State.NONE  # State of edge while execution
         if id == -1:  # Apply an autoincrement id if
-            Edge.id = Edge.id + 1  #   we not pass id as parameter
+            Edge.id = Edge.id + 1  # we not pass id as parameter
             self.id = Edge.id
         else:  # Or an existing ID if application is
-            if Edge.id <= id:  #   loading a graph file
+            if Edge.id <= id:  # loading a graph file
                 Edge.id = id + 1
             self.id = id
         # Graphic representation of edge in application
@@ -79,14 +80,24 @@ class Edge:
                 b.x,
                 b.y,
                 arrow="last",
-                arrowshape=(10 * self.app.scale, 10 * self.app.scale, 5 * self.app.scale),
+                arrowshape=(
+                    10 * self.app.scale,
+                    10 * self.app.scale,
+                    5 * self.app.scale,
+                ),
                 width=2,
                 fill=self.app.COLOR_NONE,
                 tags="edge",
             )
         else:
             self.canvas_id = self.canvas.create_line(
-                a.x, a.y, b.x, b.y, width=2, fill=self.app.COLOR_NONE, tags="edge"
+                a.x,
+                a.y,
+                b.x,
+                b.y,
+                width=2,
+                fill=self.app.COLOR_NONE,
+                tags="edge",
             )
         x_middle = (a.x + b.x) / 2
         y_middle = (a.y + b.y) / 2
@@ -101,9 +112,9 @@ class Edge:
         )
 
         self.canvas.tag_lower(self.canvas_id)
-        self.canvas.tag_bind(self.canvas_id, "<Button-1>", self.mouseDown)
-        self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouseEnter)
-        self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouseLeave)
+        self.canvas.tag_bind(self.canvas_id, "<Button-1>", self.mouse_down)
+        self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouse_enter)
+        self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouse_leave)
 
     # -------------------------
     # Get JSON
@@ -182,6 +193,8 @@ class Edge:
     # -------------------------
     def set_state(self, state: int) -> None:
         """Changes the state of this edge."""
+        self.a.change_active_edge(self, state)
+        self.b.change_active_edge(self, state)
         self.state = state
         if self.app.animation:  # draws if animation checkbox is true
             self.draw()
@@ -190,51 +203,82 @@ class Edge:
     # Draw
     # -------------------------
     def draw(self) -> None:
-        """Draws the element on the screen. It is important when the state has changed."""
+        """
+        Draws the element on the screen. It is important when the
+        state has changed.
+        """
         if self.state == State.NONE:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_NONE,
+                width=2,
+            )
         elif self.state == State.TESTING:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_OVER,
+                width=2,
+            )
         elif self.state == State.ACTIVE:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_SELECTED,
+                width=4,
+            )
         elif self.state == State.INVALID:
-            self.canvas.itemconfig(self.canvas.id, fill=self.app.COLOR_INVALID)
+            self.canvas.itemconfig(
+                self.canvas.id,
+                fill=self.app.COLOR_INVALID,
+                width=2,
+            )
 
     # -------------------------
     # On Mouse Enter
     # -------------------------
-    def mouseEnter(self, event: tk.Event) -> None:
-        """Event called when mouse is over edge line, changing the edge color."""
+    def mouse_enter(self, event: tk.Event) -> None:
+        """
+        Event called when mouse is over edge line, changing the edge color.
+        """
+        selected = self.app.selected_edge
         if not self.app.editing:
             return
-        if self.app.selected_edge != None and self.app.selected_edge == self:
+        if selected is not None and selected == self:
             return
         self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
 
     # -------------------------
     # On Mouse Leave
     # -------------------------
-    def mouseLeave(self, event: tk.Event) -> None:
-        """Event called when mouse is out of edge line, changing the edge color."""
+    def mouse_leave(self, event: tk.Event) -> None:
+        """
+        Event called when mouse is out of edge line, changing the edge color.
+        """
+        selected = self.app.selected_edge
         if not self.app.editing:
             return
-        if self.app.selected_edge != None and self.app.selected_edge == self:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
+        if selected is not None and selected == self:
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_SELECTED,
+            )
         else:
-            self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
+            self.canvas.itemconfig(
+                self.canvas_id,
+                fill=self.app.COLOR_NONE,
+            )
 
     # -------------------------
     # On Mouse Down
     # -------------------------
-    def mouseDown(self, event: tk.Event) -> None:
+    def mouse_down(self, event: tk.Event) -> None:
         """Event called when mouse was clicked over this edge."""
         if not self.app.editing:
             self.app.set_statusbar("Edge: " + str(self.id))
             return
-        if self.app.selected_edge != None:
+        if self.app.selected_edge is not None:
             self.app.selected_edge.unselect()
             self.app.selected_edge = None
-        if self.app.selected != None:
+        if self.app.selected is not None:
             self.app.selected.unselect()
             self.app.selected = None
         self.select()
@@ -252,7 +296,9 @@ class Edge:
     # Refresh
     # -------------------------
     def refresh(self) -> None:
-        """Changes edge coordinates as vertices are moved around on the canvas."""
+        """
+        Changes edge coordinates as vertices are moved around on the canvas.
+        """
         ax, ay = self.a.get_coords()
         bx, by = self.b.get_coords()
         self.canvas.coords(self.canvas_id, ax, ay, bx, by)
@@ -283,13 +329,15 @@ class Edge:
         Vertices to which it is connected.
         """
 
-        print(f"deletando edge {self.id}")
+        print(f"removing edge {self.id}")
         if not self.app.editing:
             return
-        if not self in self.a.edge or not self in self.b.edge:
+        if self not in self.a.edge or self not in self.b.edge:
             return
         self.a.edge.remove(self)
+        self.a.neighbor.pop(b.get_id(), None)
         self.b.edge.remove(self)
+        self.b.neighbor.pop(a.get_id(), None)
         self.canvas.delete(str(self.canvas_id))  # Remove line from canvas.
         self.canvas.delete(str(self.text_id))  # Remove text from canvas.
         self.app.edge.remove(self)

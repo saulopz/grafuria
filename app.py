@@ -67,8 +67,10 @@ class App(tk.Frame):
         self.bidirectional = False
         self.execution_time = 0
         self.solved = False
-        self.vertex = []
-        self.edge = []
+        self.vertex: list[Vertex] = []
+        self.vertex_dict = {}
+        self.edge: list[Edge] = []
+        self.edge_dict = {}
         self.area = []
         self.master = master
         self.scale = 1.0
@@ -156,7 +158,7 @@ class App(tk.Frame):
         """
         area = self.area
         self.canvas.create_polygon(
-            *area, fill="lemon chiffon", outline="black", tag="area"
+            *area, fill="lemon chiffon", outline="black", tags="area"
         )
         self.area = []
 
@@ -189,13 +191,19 @@ class App(tk.Frame):
         # Drop-down menus (File, Help)
         file_menu = tk.Menu(self.menu_bar, tearoff=0)
         file_menu.add_command(label="New", command=self.reset_canvas)
-        file_menu.add_command(label="Save", command=self.save_graph_file_dialog)
+        file_menu.add_command(
+            label="Save",
+            command=self.save_graph_file_dialog,
+        )
         file_menu.add_command(label="Save Log", command=self.save_log_file)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=root.quit)
 
         help_menu = tk.Menu(self.menu_bar, tearoff=0)
-        help_menu.add_command(label="Documentation", command=self.open_documentation)
+        help_menu.add_command(
+            label="Documentation",
+            command=self.open_documentation,
+        )
         help_menu.add_command(label="About", command=lambda: About(root))
 
         # Adding menus to the main menu
@@ -203,8 +211,8 @@ class App(tk.Frame):
         self.menu_bar.add_cascade(label="Help", menu=help_menu)
 
         # Main horizontal PanedWindow to organize the canvas and settings
-        main_paned_window = ttk.PanedWindow(root, orient=tk.HORIZONTAL)
-        main_paned_window.pack(fill=tk.BOTH, expand=True)
+        main_paned_window = ttk.PanedWindow(root, orient="horizontal")
+        main_paned_window.pack(fill="both", expand=True)
 
         # Canvas
         canvas_frame = ttk.Frame(main_paned_window)
@@ -212,10 +220,10 @@ class App(tk.Frame):
 
         # Scrollbars for Canvas
         self.scroll_y = tk.Scrollbar(
-            canvas_frame, orient=tk.VERTICAL, command=self.canvas.yview
+            canvas_frame, orient="vertical", command=self.canvas.yview
         )
         self.scroll_x = tk.Scrollbar(
-            canvas_frame, orient=tk.HORIZONTAL, command=self.canvas.xview
+            canvas_frame, orient="horizontal", command=self.canvas.xview
         )
         self.canvas.configure(
             yscrollcommand=self.scroll_y.set, xscrollcommand=self.scroll_x.set
@@ -240,8 +248,13 @@ class App(tk.Frame):
         main_paned_window.add(canvas_frame, weight=3)
 
         # Configuration frame on the right of the Canvas (fixed)
-        self.config_frame = ttk.Frame(main_paned_window, width=200, relief=tk.SUNKEN)
-        main_paned_window.add(self.config_frame, weight=0)  # Weight 0 prevents resizing
+        self.config_frame = ttk.Frame(
+            main_paned_window,
+            width=200,
+            relief=tk.SUNKEN,
+        )
+        # Weight 0 prevents resizing
+        main_paned_window.add(self.config_frame, weight=0)
 
         # Action button frame below the menu
         button_frame = tk.Frame(self.config_frame)
@@ -249,7 +262,9 @@ class App(tk.Frame):
 
         # Separator -----------------------------------------------------------
 
-        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
+        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(
+            fill="x", pady=(0, 0)
+        )
 
         # Loading button icons
         self.icon_play = ImageTk.PhotoImage(
@@ -294,7 +309,11 @@ class App(tk.Frame):
         graph_frame.pack(fill="x", padx=10, pady=5)
         tk.Label(graph_frame, text="Graph:").pack(side="left")
         self.graph_label = tk.Label(
-            graph_frame, text="Click here", relief="sunken", width=20, anchor="w"
+            graph_frame,
+            text="Click here",
+            relief="sunken",
+            width=20,
+            anchor="w",
         )
         self.graph_label.pack(side="right", fill="x")
         self.graph_label.bind("<Button-1>", self.on_graph_click)
@@ -304,7 +323,11 @@ class App(tk.Frame):
         script_frame.pack(fill="x", padx=10, pady=5)
         tk.Label(script_frame, text="Script:").pack(side="left")
         self.script_label = tk.Label(
-            script_frame, text="Click here", relief="sunken", width=20, anchor="w"
+            script_frame,
+            text="Click here",
+            relief="sunken",
+            width=20,
+            anchor="w",
         )
         self.script_label.pack(side="right", fill="x")
         self.script_label.bind("<Button-1>", self.on_script_click)
@@ -340,7 +363,10 @@ class App(tk.Frame):
         # Control for "Bidirectional"
         bidirectional_frame = ttk.Frame(self.config_frame)
         bidirectional_frame.pack(fill="x", padx=10, pady=0)
-        tk.Label(bidirectional_frame, text="Bidirectional:").pack(side="left", pady=0)
+        tk.Label(bidirectional_frame, text="Bidirectional:").pack(
+            side="left",
+            pady=0,
+        )
         self.var_bidirectional = tk.BooleanVar(value=True)
         self.chk_bidirectional = tk.Checkbutton(
             bidirectional_frame,
@@ -380,35 +406,53 @@ class App(tk.Frame):
         self.label_valor.pack(side="right", padx=1)
 
         # ------------------------------------------------------
-        
 
         logs_frame = ttk.Frame(self.config_frame)
         logs_frame.pack(fill="x", padx=10, pady=5)
         tk.Label(logs_frame, text="Logs Symbols:").pack(side="left")
         self.var_logs_field = tk.StringVar(value=self.var_log_symbols)
-        self.entry_logs = ttk.Entry(logs_frame, textvariable=self.var_logs_field)
+        self.entry_logs = ttk.Entry(
+            logs_frame,
+            textvariable=self.var_logs_field,
+        )
         self.entry_logs.bind("<KeyRelease>", self.on_log_symbols_change)
         self.entry_logs.pack(side="right", fill="x")
         self.config_file = "settings.json"
 
         self.load_configuration()
 
-        # Separator -----------------------------------------------------------
+        # Separator ------------------------------------------------------
 
-        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
+        ttk.Separator(self.config_frame, orient=tk.HORIZONTAL).pack(
+            fill="x", pady=(0, 0)
+        )
 
         self.bottom_config_container = ttk.Frame(self.config_frame)
-        self.bottom_config_container.pack(fill="both", expand=True, padx=2, pady=0)
+        self.bottom_config_container.pack(
+            fill="both",
+            expand=True,
+            padx=2,
+            pady=0,
+        )
 
         self.script_properties_frame = ttk.Frame(self.bottom_config_container)
-        self.script_properties_frame.pack(fill="x", anchor="nw", padx=5, pady=(0, 5))
+        self.script_properties_frame.pack(
+            fill="x",
+            anchor="nw",
+            padx=5,
+            pady=(0, 5),
+        )
 
         # Separator -----------------------------------------------------------
 
-        ttk.Separator(self.bottom_config_container, orient=tk.HORIZONTAL).pack(fill="x", pady=(0, 0))
+        ttk.Separator(self.bottom_config_container, orient=tk.HORIZONTAL).pack(
+            fill="x", pady=(0, 0)
+        )
 
         self.dynamic_config_frame = ttk.Frame(self.bottom_config_container)
-        self.dynamic_config_frame.pack(fill="both", anchor="nw", expand=True, padx=2, pady=0)
+        self.dynamic_config_frame.pack(
+            fill="both", anchor="nw", expand=True, padx=2, pady=0
+        )
 
         # Frame for vertex settings
         self.vertex_config_frame = ttk.Frame(self.dynamic_config_frame)
@@ -418,7 +462,7 @@ class App(tk.Frame):
             self.vertex_config_frame,
             text="Vertex Settings",
             font=("Segoe UI", 10, "bold"),
-            anchor="w"
+            anchor="w",
         ).pack(anchor="w", pady=2)
 
         # Line for vertex "ID"
@@ -447,7 +491,7 @@ class App(tk.Frame):
             self.edge_config_frame,
             text="Edge Settings",
             font=("Segoe UI", 10, "bold"),
-            anchor="w"
+            anchor="w",
         ).pack(anchor="w", pady=2)
 
         # Line for edge "ID"
@@ -475,12 +519,20 @@ class App(tk.Frame):
         bottom_frame.pack(fill=tk.X)
 
         # Log area with vertical scroll bar (adjustable)
-        self.log_text = tk.Text(bottom_frame, wrap="word", state="disabled", height=5)
-        self.log_scroll = tk.Scrollbar(bottom_frame, command=self.log_text.yview)
+        self.log_text = tk.Text(
+            bottom_frame,
+            wrap="word",
+            state="disabled",
+            height=5,
+        )
+        self.log_scroll = tk.Scrollbar(
+            bottom_frame,
+            command=self.log_text.yview,
+        )
         self.log_text.configure(yscrollcommand=self.log_scroll.set)
 
-        self.log_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        self.log_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+        self.log_text.pack(side="left", fill="both", expand=True)
+        self.log_scroll.pack(side="right", fill=tk.Y)
 
         # Status bar below the logs area
         self.status_frame = ttk.Frame(root)
@@ -513,7 +565,10 @@ class App(tk.Frame):
         """Open the GitHub project link after user confirmation."""
         result = messagebox.askyesno(
             "Open Documentation",
-            "This will open the project's GitHub page in your browser. Do you want to continue?",
+            (
+                "This will open the project's GitHub page in your browser. "
+                "Do you want to continue?"
+            ),
         )
         if result:  # I fuser click "Yes"
             webbrowser.open("https://github.com/saulopz/grafuria")
@@ -567,7 +622,7 @@ class App(tk.Frame):
         # Adjust your view to stay focused
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
-        # Atualizar o tamanho das setas das arestas
+        # Update the size of edge arrows
         for e in self.edge:
             self.canvas.itemconfig(
                 e.canvas_id,  # Update the element on the Canvas
@@ -609,7 +664,7 @@ class App(tk.Frame):
     # On Edge Weight Change
     # -------------------------
     def on_edge_weight_change(self, event):
-        """Changes the weith of a selected edge."""
+        """Changes the weigh of a selected edge."""
         weight = self.edge_weight.get()
         try:
             if self.selected_edge:
@@ -647,7 +702,11 @@ class App(tk.Frame):
                     bx,
                     by,
                     arrow="last",
-                    arrowshape=(10 * self.scale, 10 * self.scale, 5 * self.scale),
+                    arrowshape=(
+                        10 * self.scale,
+                        10 * self.scale,
+                        5 * self.scale,
+                    ),
                     width=2,
                     fill=self.COLOR_NONE,
                     tags="edge",
@@ -698,8 +757,9 @@ class App(tk.Frame):
     # -------------------------
     def lua_execute(self):
         """Executes a script lua if loaded"""
+        self.init_dicts()
         try:
-            lua = LuaRuntime(unpack_returned_tuples=True)
+            lua = LuaRuntime(unpack_returned_tuples=True) # type: ignore
             app_proxy = AppProxy(self)
             lua.globals().State = {
                 "NONE": State.NONE,
@@ -720,6 +780,24 @@ class App(tk.Frame):
             self.canvas.configure(bg=App.COLOR_BG_FAILED)
         if not self.animation:
             self.draw()
+
+    # -------------------------
+    # Init Dicts
+    # -------------------------
+    def init_dicts(self):
+        self.clear_dicts()
+        for vertex in self.vertex:
+            self.vertex_dict[vertex.get_id()] = vertex
+
+        for edge in self.edge:
+            self.edge_dict[edge.get_id()] = edge
+
+    # -------------------------
+    # Clear Dicts
+    # -------------------------
+    def clear_dicts(self):
+        self.vertex_dict.clear()
+        self.edge_dict.clear()
 
     # -------------------------
     # Get Var
@@ -747,11 +825,29 @@ class App(tk.Frame):
             )
 
             with open(file_path, "a") as f:
+                '''
                 f.write(
-                    f"{timestamp}\t{graph}\t{script}\t{execution_time}\t{self.solved}\n"
+                    f.write(
+                        f"{timestamp}\t"
+                        f"{graph}\t"
+                        f"{script}\t"
+                        f"{execution_time}\t"
+                        f"{self.solved}\n"
+                    )
                 )
+                '''
+                line = "\t".join(map(str, [
+                    timestamp,
+                    graph,
+                    script,
+                    execution_time,
+                    self.solved,
+                ])) + "\n"
+                f.write(line)
+
         except Exception as e:
-            self.status_bar_info.config(text=f"Error saving execution history: {e}")
+            msg = f"Error saving execution history: {e}"
+            self.status_bar_info.config(text=msg)
 
     # -------------------------
     # Show Error Alert
@@ -848,6 +944,8 @@ class App(tk.Frame):
             The user can define in the lua script what type
             of information the log is and choose in the
             interface those that he wants to be displayed.
+        system_log: bool
+            If it is a system log.
         """
         if not text:
             return
@@ -873,7 +971,8 @@ class App(tk.Frame):
     # Canvas Button 2 Event
     # -------------------------
     def canvas_button2_event(self, event) -> None:
-        """When click with mouse button 2, create a vertex in mouse position."""
+        """When click with mouse button 2, create a vertex in
+        mouse position."""
         if not self.editing:
             return
         x = self.canvas.canvasx(event.x)
@@ -898,22 +997,26 @@ class App(tk.Frame):
     # About
     # -------------------------
     def about(self) -> None:
-        """Open the about dialog window."""
-        tk.messagebox.askquestion("About", "Hemiltonian Path", icon="info")
+        """Open the about window."""
+        tk.messagebox.askquestion("About", "Hamiltonian Cycle", icon="info")
 
     # -------------------------
     # Get Graph
     # -------------------------
     def get_graph(self) -> str:
         """Create a string with graph information in JSON format."""
-        vertex: Vertex = []
+        vertex: list[Vertex] = []
         for v in self.vertex:
             vertex.append(v.get_json())
-        edge: Edge = []
+        edge: list[Edge] = []
         for e in self.edge:
             edge.append(e.get_json())
         self.log(f"$bidirectional {self.bidirectional}")
-        obj = {"bidirectional": self.bidirectional, "vertex": vertex, "edge": edge}
+        obj = {
+            "bidirectional": self.bidirectional,
+            "vertex": vertex,
+            "edge": edge,
+        }
         return json.dumps(obj)
 
     # -------------------------
@@ -1028,13 +1131,15 @@ class App(tk.Frame):
                         a = v
                     if e["b"] == v.id:
                         b = v
-                    if a != None and b != None:
+                    if a is not None and b is not None:
                         break
                 weight = e.get("weight", 1)
                 edge = Edge(a, b, weight, self, id=e["id"])
                 self.edge.append(edge)
                 a.edge.append(edge)
                 b.edge.append(edge)
+                a.neighbor[b.get_id()] = edge
+                b.neighbor[a.get_id()] = edge
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
             name = os.path.splitext(os.path.basename(self.filename))[0]
@@ -1072,7 +1177,9 @@ class App(tk.Frame):
                 self.var_animation.set(j.get("animation", True))
                 self.animation = self.var_animation.get()
                 self.speed = j.get("speed", 10)
-                self.var_execution_time_log.set(j.get("execution_time_log", False))
+                self.var_execution_time_log.set(
+                    j.get("execution_time_log", False),
+                )
                 self.execution_time_log = self.var_execution_time_log.get()
                 self.var_log_symbols = j.get("logs_symbols", "")
         else:
@@ -1087,6 +1194,7 @@ class App(tk.Frame):
     # -------------------------
     def reset_canvas(self) -> None:
         """Reset canvas to create a new graph."""
+        self.clear_dicts()
         self.clear_log()
         self.event_clear()
         self.filename = ""

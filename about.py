@@ -56,7 +56,7 @@ class About:
             font=("Arial", 10),
         ).pack(pady=1)
 
-        self.label_email = Label(
+        Label(
             self.dialog,
             text="saulopz@gmail.com",
             font=("Arial", 10),
