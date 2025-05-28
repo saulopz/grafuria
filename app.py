@@ -276,18 +276,6 @@ class App(tk.Frame):
         self.icon_clear = ImageTk.PhotoImage(
             Image.open("res/rotate-solid.png").resize((20, 20))
         )
-        self.icon_min = ImageTk.PhotoImage(
-            Image.open("res/down-long-solid.png").resize((20, 20))
-        )
-        self.icon_minus = ImageTk.PhotoImage(
-            Image.open("res/minus-solid.png").resize((20, 20))
-        )
-        self.icon_plus = ImageTk.PhotoImage(
-            Image.open("res/plus-solid.png").resize((20, 20))
-        )
-        self.icon_max = ImageTk.PhotoImage(
-            Image.open("res/up-long-solid.png").resize((20, 20))
-        )
 
         # Adding buttons
         self.bt_play = ttk.Button(
