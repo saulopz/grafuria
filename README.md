@@ -1,10 +1,10 @@
 # Grafuria
 
-Author: Saulo Popov Zambiasi
+Author: Saulo Popov Zambiasi  
 E-mail: [saulopz@gmail.com](mailto:saulopz@gmail.com)
 
-Created: 2024-10-25
-Last Update: 2025-06-19
+Created: 2024-10-25  
+Last Update: 2025-06-20  
 Version: 1.0
 
 ---
@@ -26,7 +26,7 @@ It allows users to easily construct directed and undirected graphs, assign weigh
 To launch the program:
 
 ```sh
-$ python3 main.py graph=graphs/dodecaedron.json script=lua/bfs.lua
+$ python3 main.py graph=graphs/dodecaedron.json script=scripts/bfs.lua
 ```
 
 Or on Linux systems:

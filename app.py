@@ -54,8 +54,8 @@ class App(tk.Frame):
             Path and file name of the algorithm in lua programming language.
         """
         super().__init__(master)
-        self.script_type = ScriptType.NONE
-        self.script_lua = script_lua
+        self.script = script_lua
+        self.script_type = ScriptType.NONE        
         self.script_properties = None
         self.script_properties_frame = None
         self.config_file = "settings.json"
@@ -85,11 +85,11 @@ class App(tk.Frame):
         self.filename: str = ""
         if filename != "":
             self.load_graph_file(filename)
-        if self.script_lua != "":
+        if self.script != "":
             self.script_properties = Properties(
-                self.script_properties_frame, self.script_lua
+                self.script_properties_frame, self.script
             )
-            name = os.path.splitext(os.path.basename(self.script_lua))[0]
+            name = os.path.splitext(os.path.basename(self.script))[0]
             self.script_label.config(text=name)
 
     # -------------------------
@@ -631,7 +631,7 @@ class App(tk.Frame):
         script file in Lua programming language.
         """
         self.open_script_file()
-        name = os.path.splitext(os.path.basename(self.script_lua))[0]
+        name = os.path.splitext(os.path.basename(self.script))[0]
         self.script_label.config(text=name)
 
     # -------------------------
@@ -725,7 +725,7 @@ class App(tk.Frame):
         It is executed when the play button is pressed, starting the
         execution of an algorithm on a graph.
         """
-        if not self.script_lua:
+        if not self.script:
             self.show_error_alert("You need a graph and an algorithm to run.")
             return
         self.clear_log()
@@ -741,11 +741,13 @@ class App(tk.Frame):
 
         # For now python too ------------------------
         def _run_script():
-            ext = os.path.splitext(self.script_lua)[1].lower()
+            ext = os.path.splitext(self.script)[1].lower()
             try:
                 if ext == ".lua":
+                    self.script_type = ScriptType.LUA
                     self.lua_execute()
                 elif ext == ".py":
+                    self.script_type = ScriptType.PYTHON
                     self.python_execute()
                 else:
                     self.log(f"Unsupported script extension: {ext}", True)
@@ -775,7 +777,7 @@ class App(tk.Frame):
                 "INVALID": State.INVALID,
             }
             lua.globals().app = app_proxy
-            with open(self.script_lua, "r") as file:
+            with open(self.script, "r") as file:
                 lua_script = file.read()
             lua.execute(lua_script)
             self.save_execution_history()
@@ -806,7 +808,7 @@ class App(tk.Frame):
                     "INVALID": State.INVALID,
                 },
             }
-            with open(self.script_lua, "r") as file:
+            with open(self.script, "r") as file:
                 python_script = file.read()
             exec(python_script, exec_globals)
             self.save_execution_history()
@@ -857,7 +859,7 @@ class App(tk.Frame):
         try:
             file_path = "execution_history.cvs"
             graph = os.path.basename(self.filename)
-            script = os.path.basename(self.script_lua)
+            script = os.path.basename(self.script)
             # locale.setlocale(locale.LC_NUMERIC, "pt_BR.UTF-8")
             timestamp = datetime.now().strftime("%Y-%m-%d\t%H:%M:%S")
             execution_time = locale.format_string(
@@ -1121,7 +1123,7 @@ class App(tk.Frame):
     # Open Script File Dialog
     # -------------------------
     def open_script_file(self) -> None:
-        """Abre a janela de seleção de arquivos de algoritmo (.lua ou .py customizados)."""
+        """Open a window to select a script file (.lua or .py)."""
         from tkinter import filedialog
 
         self.event_stop()
@@ -1137,18 +1139,15 @@ class App(tk.Frame):
         )
 
         if filename:
-            # Garante que está dentro da pasta scripts (evita arquivos do app)
+            # Waranty that the file is inside the scripts folder
+            # This is to avoid opening files from the app folder or other locations
             if not os.path.abspath(filename).startswith(os.path.abspath("scripts")):
                 self.show_error_alert("Only scripts inside the 'scripts/' folder can be opened.")
                 return
 
             if os.path.isfile(filename):
-                self.script_lua = filename  # você pode querer renomear isso depois
-                if filename.endswith(('.lua')):
-                    self.script_type = ScriptType.LUA
-                else:
-                    self.script_type = ScriptType.PYTHON
-                self.script_properties = Properties(self.script_properties_frame, self.script_lua)
+                self.script = filename
+                self.script_properties = Properties(self.script_properties_frame, self.script)
             else:
                 print("Error: File not found.")
         else:
