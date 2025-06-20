@@ -1,345 +1,197 @@
 # Grafuria
 
 Author: Saulo Popov Zambiasi
+E-mail: [saulopz@gmail.com](mailto:saulopz@gmail.com)
 
-E-mail: saulopz@gmail.com
-
-Created : 2024-10-25
-
-Last Update: 2025-05-08
-
+Created: 2024-10-25
+Last Update: 2025-06-19
 Version: 1.0
 
-## About
+---
 
-This program is designed for creating graphs and executing algorithms written in the Lua programming language on them.
+## About Grafuria
 
-It allows users to easily construct directed and undirected graphs and weight connections. The software supports dynamic interaction with the graph using Lua scripts, allowing the execution of various algorithms to manipulate the structure and behavior of the graph.
+**Grafuria** is a graphical tool designed to create, visualize, and manipulate graphs using Lua or Python algorithms.
+
+It allows users to easily construct directed and undirected graphs, assign weights to edges, and execute dynamic algorithms that interact with the graph in real time. Lua is used as the scripting language, and a subset of the API is also available in Python for reference.
 
 ![Screenshot](res/screenshot_001.png)
 
-## Tutorial
+---
 
-### Opening the Program via Command Line and Graphical Interface
+## Getting Started
+
+### Launching from Command Line
+
+To launch the program:
 
 ```sh
 $ python3 main.py graph=graphs/dodecaedron.json script=lua/bfs.lua
 ```
 
-Or just type `./grafuria` and the parameters in sequence. (Linux)
+Or on Linux systems:
 
-The parameters are optional and are used to open the program with a selected graph and/or a Lua algorithm to be executed on the graph.
-
-If you choose to open a graph or algorithm in the already opened graphical interface, just click on the field next to __Graph__ to open a graph or on the field next to __Algorithm__ to open an algorithm.
-
-In the settings bar on the right, at the top there are three buttons, __Play__, __Stop__ and __Refresh__:
-
-- __Play__: Executes the algorithm on the selected graph.
-- __Stop__: Interrupts the execution of the algorithm. It is important that some instructions are properly implemented in the algorithm when checking if the algorithm was interrupted with `app:is_stopped()`.
-- __Refresh__: Clears the graph and logs. If the algorithm is running, interrupts it.
-
-The __Checkbox__ are:
-
-- __Animation__: Enables or disables showing the animation of the algorithm execution.
-
-- __Speed__: Execution speed. 10 is the maximum speed, without using `Sleep` and 0 is the minimum speed.
-
-The `Logs Symbols` field are special characters to use in the `app:log()` command. The first character of the string of this call will be evaluated and the program will only show this log, if the character is in the `Log Symbols` field.
-
-### Creating a Graph
-
-By opening the program without any parameters, you are ready to create a graph. If there is already a graph in the drawing area and you want to create a new one, just go to the `File... New...` menu. This will refresh the application.
-
-- `Mouse button 2`: When you click the mouse wheel button, a new vertex is created in the drawing area.
-- `Mouse button 1`: Used to select a vertex or an edge. A configuration area will appear in the right sidebar, at the bottom. There you configure the name of a vertex or the weight of an edge.
-- `Mouse button 3`: This button is used to create a connection between a vertex A, which must already be previously selected, with a vertex B.
-
-After creating or modifying your graph, just go to the `File... Save...` menu and choose the name and location where you want to save your graph.
-
-# Writing the Algorithms
-
-The Grafuria program uses the Lua programming language as its scripting language.
-
-The default folder for algorithms is `lua/`, but you can create a subfolder and create your algorithm in that subfolder. This is especially useful when you want to modularize your algorithm into multiple files.
-
-To create an algorithm, you can use your preferred IDE and open a script file with the `.lua` extension. However, to use Grafuria's features and interact with a graph opened in the interface, we use some classes and methods already registered in the application using the Python programming language.
-
-## Class App
-
-We have already created and registered an instance of the app class globally for your lua script, so just use its methods:
-
-### `app:log(string)`:
-
-Displays a log message in the area below the application.
-
-__Example__:
-
-```lua
-app:log("#Vertex id: " .. v:get_id())
+```sh
+$ ./grafuria graph=... script=...
 ```
 
-### `app:is_stopped() -> boolean`:
+Both parameters are optional. If omitted, the interface will start with an empty canvas.
 
-Checks if the algorithm's interrupt command was pressed. It is interesting to do this check inside loops.
+### Using the Interface
 
-__Example__:
+Within the graphical interface, you can:
 
-```lua
-if app:is_stopped() then
-    return
-end
-```
+* Open a graph by clicking the field next to `Graph`
+* Load an algorithm by clicking the field next to `Algorithm`
 
-### `app:set_solved(boolean)`:
+### Toolbar Controls
 
-Informs the application whether the algorithm has been solved or not.
+* `Play`: Executes the selected algorithm on the current graph.
+* `Stop`: Interrupts execution. Scripts should check `app:is_stopped()` periodically.
+* `Refresh`: Clears the graph and logs. Interrupts the algorithm if it's running.
 
-__Example__:
+### Sidebar Controls
 
-```lua
-app:set_solved(true)
-```
+* `Animation`: Toggles visual feedback during execution.
+* `Speed`: Adjusts execution speed (0 = slowest, 10 = instant).
+* `Log Symbols`: Filters logs by prefix symbols in `app:log()` messages.
 
-### `app:get_vertex_size() -> integer`:
+---
 
-Returns the number of vertices in the graph. Very useful in loops where you want to scan all the vertices in the graph.
+## Creating a Graph
 
-__Example__:
+When the program starts without arguments, you can build a new graph:
 
-```lua
-local vsize = app:get_vertex_size()
-```
+* **Mouse Button 2 (Middle Click)**: Add a vertex at the cursor position.
+* **Mouse Button 1 (Left Click)**: Select a vertex or edge to configure its name or weight in the right sidebar.
+* **Mouse Button 3 (Right Click)**: Connect a selected vertex A to another vertex B.
 
-### `app:get_vertex(integer) - Vertex`:
+To save your graph: `File > Save...`
+To start fresh: `File > New...`
 
-Returns the vertex at position (integer) of the graph's vertex vector, passed as a parameter.
+---
 
-__Example__:
+## Writing Algorithms
 
-```lua
-local vsize = app:get_vertex_size()
-for i = 1, vsize do
-    -- returns a vertex with id 'i'
-    local v = app:get_vertex(i) 
-    app:log("#Vertex(" .. i .. ") id = " .. v:get_id())
-end
-```
+Lua is the main scripting language used in Grafuria. Each algorithm script interacts with the graph via a globally available `app` instance.
 
-### `app:get_var(name) -> any`:
+> You may organize your scripts in subfolders under `lua/` for better modularity.
 
-Returns the value of a attribute created with a configuration file of script.
+### Lua vs Python API Comparison
 
-__Example__:
+| Function          | Lua                     | Python                  |
+| ----------------- | ----------------------- | ----------------------- |
+| Logging           | `app:log("msg")`        | `app.log("msg")`        |
+| Check Stop        | `app:is_stopped()`      | `app.is_stopped()`      |
+| Set Solved        | `app:set_solved(true)`  | `app.set_solved(True)`  |
+| Get Vertex Count  | `app:get_vertex_size()` | `app.get_vertex_size()` |
+| Access Vertex     | `app:get_vertex(i)`     | `app.get_vertex(i)`     |
+| Wait Step         | `app:step()`            | `app.step()`            |
+| Set/Get Variables | `app:set_var("k", v)`   | `app.set_var("k", v)`   |
 
-```lua
-local deep = app:get_var("deep")
-while level <= deep do
-    --
-    level = level + 1
-end
-```
+Note: Lua arrays start at index 1, while Python uses index 0.
 
-### 'app:set_var(name, value)`:
+### Script Configuration Variables
 
-Sets the value of a variable created with a configuration file of script.
-__Example__:
-
-```lua
-app:set_var("deep", 10)
-```
-
-### Script File Configuration
-
-We can create variables in the script configuration file, to be used in a Lua script. These variables are used to store information that we want to use in our algorithm.
-
-The configuration file is a JSON file, which is created in the same folder as the graph. The name of the configuration file must be the same as the graph name, but with the `.json` extension.
-
-For example:
+Scripts may use a companion JSON file to define runtime parameters:
 
 ```json
 {
-    "deep": 5,
-    "name": "My Graph"
-}
-```
-The configuration file is loaded when the script is loaded and the interface create dinamically the visual vields for each variable. The name of the variable is the same as the key in the JSON file.
-The value of the variable can be a string, integer, float or boolean.
-
-If the variable is a integer and you want use with a range, you need create the variable name with myvar_min and myvar_max. The value of the variable will be the range of the variable.
-
-For example:
-
-```json
-{
-    "deep": 5,
-    "deep_min": 1,
-    "deep_max": 10
+  "deep": 5,
+  "deep_min": 1,
+  "deep_max": 10,
+  "name": "Example Graph"
 }
 ```
 
-And in the interface, the variable will be seen as a scale, with the range between 1 and 10. The value of the variable will be the value of the scale.
+When loaded, the UI creates interactive fields for these variables. Ranges (`*_min` / `*_max`) create sliders.
 
+The JSON file must have the same name as the script.
 
-### `app:step()`:
+---
 
-This command performs a control stop by the application and configured in the application. It pauses, with 0 being the slowest and 10 being no pause.
+## Classes and Methods
 
-Use this command in loops where you change the state of a vertex or edge. This will give a more accurate and slower view, if you reduce the `Speed` information in the interface, of how things occur in your algorithm.
-
-__Example__:
+### App Class
 
 ```lua
-local vsize = app:get_vertex_size()
-for i = 1, vsize do
-    local v = app:get_vertex(i)
-    v:set_state(State.ACTIVE)
-    -- your code
-    app:step()
+local size = app:get_vertex_size()
+app:log("# Graph has " .. size .. " vertices.")
+```
+
+Available Methods:
+
+* `log(message)` — Writes a log message to the application console.
+* `is_stopped()` — Returns true if execution has been interrupted via the interface.
+* `set_solved(bool)` — Marks the algorithm as completed or solved.
+* `get_vertex_size()` — Returns the total number of vertices in the graph.
+* `get_vertex(index)` — Returns the vertex at a given index.
+* `get_var(name)` — Retrieves a script variable defined in the configuration JSON.
+* `set_var(name, value)` — Assigns a value to a script variable.
+* `step()` — Causes the application to pause based on the speed setting, useful for animated execution steps.
+
+### Vertex Class
+
+```lua
+local v = app:get_vertex(1)
+if v then
+    app:log("Vertex id: " .. v:get_id())
 end
 ```
 
-# Class Vertex
+Available Methods:
 
-Unlike the App class, where we already have an app instance to use, in our algorithm we need to allocate an object in memory to link to the graph vertex in the application.
+* `get_id()` — Returns the vertex's unique ID.
+* `get_name()` — Returns the name of the vertex.
+* `get_state()` — Gets the current state of the vertex.
+* `set_state(state)` — Sets the state of the vertex (e.g., `State.ACTIVE`).
+* `get_edge_size()` — Returns the number of edges connected to this vertex.
+* `get_edge(i)` — Returns the i-th edge of this vertex.
+* `get_active_edge_size()` — Returns the number of edges currently in the `ACTIVE` state.
+* `is_connected(vertex)` — Returns true if the current vertex is connected to the given vertex.
+* `get_adjacent(edge)` — Returns the vertex connected to this one via the given edge.
 
-### `get_id() -> integer`:
-
-Gets the ID (integer top) of the vertex.
-
-__Example__:
-
-```lua
-local v1 = app:get_vertex(1)
-if v1 then
-    app:log("#Vertex id: " ... v1:get_id())
-end
-```
-
-### `get_name() -> string`:
-
-Returns the name of vertex.
-
-__Example__:
+### Edge Class
 
 ```lua
-local v1 = app:get_vertex(1)
-if v1 then
-    app:log("#Vertex name: " ... v1:get_name())
-end
+local edge = v:get_edge(1)
 ```
 
-### `get_state() -> integer`:
+Available Methods:
 
-Receives the state of the vertex. The states can be:
+* `get_id()` — Returns the edge's unique ID.
+* `get_state()` / `set_state(state)` — Gets or sets the edge's state (e.g., active, testing).
+* `get_weight()` / `set_weight(weight)` — Gets or sets the edge's weight (a floating-point value).
+* `get_a()` — Returns one endpoint vertex of the edge.
+* `get_b()` — Returns the other endpoint vertex of the edge.
 
-* `State.None`: the vertex is not active.
-* `State.TESTING`: the vertex is being evaluated.
-* `State.ACTIVE`: vertex activated.
+---
 
-### `set_state(integer)`:
+### Vertex and Edge States
 
-Changes the state of the vertex according to the states above. Every time we change the state of a vertex, or edge, if the `Animation` checkbox in the application is active, we change the color of the object.
+* `State.NONE`: Default state (not active)
+* `State.TESTING`: Under evaluation
+* `State.ACTIVE`: Marked as active during execution
 
-__Example__:
+---
 
-```lua
-v:set_state(State.ACTIVE)
-```
+## Examples
 
-### `is_connected(vertex) -> boolean`:
+Sample content is available in the following folders:
 
-Checks if the vertex is connected with another vertex, passed as a parameter.
+* `graphs/` — includes examples like `dodecaedron.json`
+* `scripts/` — includes BFS and DFS implementations
 
-__Example__:
+These scripts randomly choose two vertices and find paths using different strategies.
 
-```lua
-local a = app:get_vertex(1)
-local b = app:get_vertex(2)
-if a:is_connected(b) then
-    app:log("$Vertex " .. a:get_id() .. " is connected with " .. b:get_id())
-end
-```
+---
 
-### `get_edge_size() -> integer`:
+## Limitations and Future Work
 
-Returns how many connections a vertex has.
+* Bidirectional edges (A->B and B->A) are not supported in directed graphs.
+* Self-loops (edges from a vertex to itself) are not yet implemented.
+* There's currently no export option for saving the algorithm's result or final path.
 
-__Example__:
+---
 
-```lua
-local esize = v:get_edge_size()
-for i = 1, esize do
-    local e = v:get_edge(i)
-    -- your code here
-end
-```
-
-### `get_edge(integer) -> Edge`:
-
-Returns an edge at position `i` in the vector of edges connected to the vertex. The usage example has already been presented above.
-
-### `get_active_edge_size() -> integer`:
-
-Returns how many connections in the State.ACTIVE state this vertex has.
-
-### `get_adjacent(Edge) -> Vertex`:
-
-Returns the adjacent vertex of the current vertex, connected by the edge passed as a parameter, if there is a connection from the current vertex to the other.
-
-__Example__:
-
-```lua
-local v = app:get_vertex(1) -- take the first vertex of the graph
-if v and v:get_edge_size() > 0 then -- if v exists and it has connections
-    local e = v:get_edge(1) -- grab the edge of the first connection
-    local adjacent = v:get_adjacent(e)
-    app:log("$Vertex " .. v:get_id() .. " is neighbor of " .. adjacent:get_id())
-end
-```
-
-## Class Edge
-
-Just like the Vertex class, Edge needs to be instantiated in the algorithm. Some methods have the same behavior as certain methods of the Vertex class, so I will not present examples.
-
-### `get_id() -> integer`:
-
-Returns the id of an edge.
-
-### `get_state() -> integer`:
-
-Returns the state of the edge. Edges that are being used in the graph to reach vertices also need to change their state in order to find paths.
-
-### `set_state(integer)`:
-
-Changes the state of an edge. As per the States already presented.
-
-### `get_weight() -> float`:
-
-Returns a `float` value with the weight of the connection or distance between two vertices.
-
-### `set_weight(float)`:
-
-Changes the value, in `float`, of the weight of the connection or distance between two vertices.
-
-### `get_a() -> Vertex`:
-
-Returns the vertex of one of the ends of the edge. If the graph is unidirectional, then `a` is the entry point.
-
-### `get_b() -> Vertex`:
-
-Returns the vertex of the other end of the edge. If the graph is unidirectional, then `b` is the tip of the arrow, or exit.
-
-# Examples
-
-I created some examples of __graphs__ in the `graph/` folder. You can use them, change them or create new graphs in this folder or even in another folder of your choice.
-
-I also created two examples of graph __algorithms__ in the `lua/` folder. One is the `Depth-First Search` (DFS) which searches the path from a vertex `a` to a vertex `b`, both chosen randomly. And the other algorithm is the `Breadth First Search` (BFS), which does the same search, but with different behavior.
-
-# Considerations
-
-There are some things I haven't done yet and I intend, if I have time, to do them at another time. Among them are:
-
-- In the case of unidirectional graphs, I did not include the option for a vertex to have an edge from `a` to `b` and another that returns from `b` to `a`. It is only possible to have one edge between these two vertices.
-- I also do not have a circular edge, which starts from `a` and returns to `a` in the case of loops.
-- Option to store the graph structure, and the path found, after executing the algorithm.
-
+For questions or contributions, feel free to contact the author or open a GitHub issue. Happy graphing!

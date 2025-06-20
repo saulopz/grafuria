@@ -16,6 +16,7 @@ function first_path(root)
                     found = true
                     return 0
                 end
+                app:step()
                 return first_path(adjacent) + 1
             end
         end

@@ -1,4 +1,4 @@
-dofile("lua/globals.lua")
+dofile("scripts/globals.lua")
 
 --- Represents a node in a tree structure.
 --- 

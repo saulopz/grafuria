@@ -33,4 +33,9 @@ class AppProxy:
         self._app.step()
 
     def get_vertex(self, index):
-        return VertexProxy(self._app, self._app.get_vertex(index - 1))
+        from state import ScriptType
+
+        aux = 0
+        if self._app.script_type == ScriptType.LUA:
+            aux = 1
+        return VertexProxy(self._app, self._app.get_vertex(index - aux))

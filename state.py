@@ -1,3 +1,21 @@
+class ScriptType:
+    """
+    Enumeration to represent the type of script.
+
+    Attributes
+    ----------
+    NONE : int
+        Represents no script.
+    PYTHON : int
+        Represents a Python script.
+    LUA : int
+        Represents a Lua script.
+    """
+
+    NONE = 0
+    PYTHON = 1
+    LUA = 2
+
 class State:
     """
     Enumeration to represents Edge, Vertex and Node states.

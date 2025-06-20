@@ -11,7 +11,7 @@ import json
 import time
 import webbrowser
 from threading import Thread
-from state import State
+from state import State, ScriptType
 from about import About
 from lupa import LuaRuntime
 from app_proxy import AppProxy
@@ -54,6 +54,7 @@ class App(tk.Frame):
             Path and file name of the algorithm in lua programming language.
         """
         super().__init__(master)
+        self.script_type = ScriptType.NONE
         self.script_lua = script_lua
         self.script_properties = None
         self.script_properties_frame = None
@@ -731,12 +732,30 @@ class App(tk.Frame):
         self.event_clear()
         self.canvas.configure(bg=App.COLOR_BG_RUNNING)
         self.editing = False
+       
         if self.selected is not None:
             self.selected.unselect()
         if self.selected_edge is not None:
             self.selected_edge.unselect()
         self.stopped = False
-        a = Thread(target=self.lua_execute)
+
+        # For now python too ------------------------
+        def _run_script():
+            ext = os.path.splitext(self.script_lua)[1].lower()
+            try:
+                if ext == ".lua":
+                    self.lua_execute()
+                elif ext == ".py":
+                    self.python_execute()
+                else:
+                    self.log(f"Unsupported script extension: {ext}", True)
+            except Exception as e:
+                self.log(f"Error executing script: {e}", True)
+        # --------------------------------------
+
+        a = Thread(target=_run_script)
+
+        # a = Thread(target=self.lua_execute)
         a.daemon = True
         a.start()
 
@@ -766,6 +785,39 @@ class App(tk.Frame):
             self.canvas.configure(bg=App.COLOR_BG_SOLVED)
         else:
             self.canvas.configure(bg=App.COLOR_BG_FAILED)
+        if not self.animation:
+            self.draw()
+
+
+    # -------------------------
+    # Python Execute
+    # -------------------------
+    def python_execute(self):
+        """Executa um script Python se carregado"""
+        self.init_dicts()
+        try:
+            app_proxy = AppProxy(self)
+            exec_globals = {
+                "app": app_proxy,
+                "State": {
+                    "NONE": State.NONE,
+                    "TESTING": State.TESTING,
+                    "ACTIVE": State.ACTIVE,
+                    "INVALID": State.INVALID,
+                },
+            }
+            with open(self.script_lua, "r") as file:
+                python_script = file.read()
+            exec(python_script, exec_globals)
+            self.save_execution_history()
+        except Exception as e:
+            self.log(f"[Erro no script Python] {e}", True)
+
+        if self.solved:
+            self.canvas.configure(bg=App.COLOR_BG_SOLVED)
+        else:
+            self.canvas.configure(bg=App.COLOR_BG_FAILED)
+
         if not self.animation:
             self.draw()
 
@@ -1069,12 +1121,47 @@ class App(tk.Frame):
     # Open Script File Dialog
     # -------------------------
     def open_script_file(self) -> None:
+        """Abre a janela de seleção de arquivos de algoritmo (.lua ou .py customizados)."""
+        from tkinter import filedialog
+
+        self.event_stop()
+
+        filename = filedialog.askopenfilename(
+            title="Open an algorithm file",
+            initialdir="scripts",
+            filetypes=[
+                ("Algorithm Scripts", "*.lua *.py *.gpy *.algpy"),
+                ("Lua Scripts", "*.lua"),
+                ("Python Scripts", "*.py *.gpy *.algpy"),
+            ],
+        )
+
+        if filename:
+            # Garante que está dentro da pasta scripts (evita arquivos do app)
+            if not os.path.abspath(filename).startswith(os.path.abspath("scripts")):
+                self.show_error_alert("Only scripts inside the 'scripts/' folder can be opened.")
+                return
+
+            if os.path.isfile(filename):
+                self.script_lua = filename  # você pode querer renomear isso depois
+                if filename.endswith(('.lua')):
+                    self.script_type = ScriptType.LUA
+                else:
+                    self.script_type = ScriptType.PYTHON
+                self.script_properties = Properties(self.script_properties_frame, self.script_lua)
+            else:
+                print("Error: File not found.")
+        else:
+            print("No file selected.")
+
+    '''
+    def open_script_file(self) -> None:
         """Open the algorithm file dialog (in Lua language)."""
         self.event_stop()
         filename = askopenfilename(  # Opening the file selection window.
             title="Open an algorithm file",
-            initialdir="lua",
-            filetypes=[("lua files", "*.lua")],
+            initialdir="scripts",
+            filetypes=[("script files", "*.lua")],
         )
         if filename:
             if os.path.isfile(filename):
@@ -1086,6 +1173,7 @@ class App(tk.Frame):
                 print("Error: File not found.")
         else:
             print("No file selected.")
+    '''
 
     # -------------------------
     # Load Graph File

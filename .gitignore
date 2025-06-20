@@ -12,8 +12,8 @@
 graph/*/
 
 # Include the 'lua' subfolder and its files, but not its subdirectories
-!lua/
-lua/*/
+!scripts/
+scripts/*/
 
 # Include the 'res' subfolder and all its files and subdirectories
 !res/

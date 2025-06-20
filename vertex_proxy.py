@@ -38,8 +38,12 @@ class VertexProxy:
 
     def get_edge(self, index):
         from edge_proxy import EdgeProxy
+        from state import ScriptType
 
-        return EdgeProxy(self._app, self._vertex.get_edge(index - 1))
+        aux = 0
+        if self._app.script_type == ScriptType.LUA:
+            aux = 1
+        return EdgeProxy(self._app, self._vertex.get_edge(index - aux))
 
     def get_adjacent(self, edge):
         adjacent = self._vertex.get_adjacent(edge.get_raw_edge())
