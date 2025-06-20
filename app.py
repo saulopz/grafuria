@@ -1107,7 +1107,7 @@ class App(tk.Frame):
         self.event_stop()
         filename = askopenfilename(
             title="Open a graph file",
-            initialdir="graph",
+            initialdir="graphs",
             filetypes=[("json files", "*.json")],
         )
         if filename != "":
