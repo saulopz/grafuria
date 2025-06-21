@@ -75,16 +75,16 @@ class DFS:
         destination_pos: integer
             The ID of the end vertex in the graph.
         """
-        self.origin_pos = origin_pos
-        self.destination_pos = destination_pos
+        self.origin_id = app.get_vertex(origin_pos).get_id()
+        self.destination_id = app.get_vertex(destination_pos).get_id()
         self.found = False
-        self.origin = DFSNode(app.get_vertex(self.origin_pos))
+        self.origin = DFSNode(app.get_vertex(origin_pos))
         self.path = ""
 
     def run(self):
         """Executes the Depth-First Search algorithm."""
         app.log(f"$Algorithm Depth-First Search (DFS)")
-        app.log(f"$Trying find a way from {self.origin_pos} to {self.destination_pos}")
+        app.log(f"$Trying find a way from {self.origin_id} to {self.destination_id}")
         start_time = time.perf_counter()
 
         if self.origin:
@@ -98,7 +98,7 @@ class DFS:
 
     def visit(self, current: DFSNode):
         """
-        Recursive method thats open a node to continue searching for
+        Recursive method that open a node to continue searching for
         the path of solution.
 
         Parameters
@@ -123,7 +123,7 @@ class DFS:
                 edge.set_state(State.TESTING)
                 neighbor.set_state(State.TESTING)
 
-                if neighbor.get_id() == self.destination_pos:
+                if neighbor.get_id() == self.destination_id:
                     self.found = True
                     app.set_solved(True)
                     neighbor.set_state(State.ACTIVE)
@@ -160,6 +160,6 @@ random starting and random destination vertex.
 """
 random.seed(time.time())
 vertex_size = app.get_vertex_size()
-orig = app.get_vertex(random.randint(0, vertex_size-1)).get_id()
-dest = app.get_vertex(random.randint(0, vertex_size-1)).get_id()
+orig = random.randint(0, vertex_size-1)
+dest = random.randint(0, vertex_size-1)
 DFS(orig, dest).run()

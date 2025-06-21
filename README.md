@@ -79,15 +79,16 @@ Lua is the main scripting language used in Grafuria. Each algorithm script inter
 
 ### Lua vs Python API Comparison
 
-| Function          | Lua                     | Python                  |
-| ----------------- | ----------------------- | ----------------------- |
-| Logging           | `app:log("msg")`        | `app.log("msg")`        |
-| Check Stop        | `app:is_stopped()`      | `app.is_stopped()`      |
-| Set Solved        | `app:set_solved(true)`  | `app.set_solved(True)`  |
-| Get Vertex Count  | `app:get_vertex_size()` | `app.get_vertex_size()` |
-| Access Vertex     | `app:get_vertex(i)`     | `app.get_vertex(i)`     |
-| Wait Step         | `app:step()`            | `app.step()`            |
-| Set/Get Variables | `app:set_var("k", v)`   | `app.set_var("k", v)`   |
+| Function          | Lua                        | Python                     |
+| ----------------- | -------------------------- | -------------------------- |
+| Logging           | `app:log("msg")`           | `app.log("msg")`           |
+| Check Stop        | `app:is_stopped()`         | `app.is_stopped()`         |
+| Set Solved        | `app:set_solved(true)`     | `app.set_solved(True)`     |
+| Get Vertex Count  | `app:get_vertex_size()`    | `app.get_vertex_size()`    |
+| Access Vertex     | `app:get_vertex(i)`        | `app.get_vertex(i)`        |
+| Vertex by ID      | `app:get_vertex_by_id(id)` | `app.get_vertex_by_id(id)` |
+| Wait Step         | `app:step()`               | `app.step()`               |
+| Set/Get Variables | `app:set_var("k", v)`      | `app.set_var("k", v)`      |
 
 Note: Lua arrays start at index 1, while Python uses index 0.
 
@@ -126,6 +127,7 @@ Available Methods:
 * `set_solved(bool)` — Marks the algorithm as completed or solved.
 * `get_vertex_size()` — Returns the total number of vertices in the graph.
 * `get_vertex(index)` — Returns the vertex at a given index.
+* `get_vertex_by_id(id)` — Retrieves a vertex by its unique ID.
 * `get_var(name)` — Retrieves a script variable defined in the configuration JSON.
 * `set_var(name, value)` — Assigns a value to a script variable.
 * `step()` — Causes the application to pause based on the speed setting, useful for animated execution steps.

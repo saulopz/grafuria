@@ -46,12 +46,12 @@ BFS.__index = BFS
 ---@param destination_pos integer The end vertex point
 function BFS.new(origin_pos, destination_pos)
     local self = setmetatable({}, BFS)
-    self.origin_pos = origin_pos
-    self.destination_pos = destination_pos
+    self.origin_id = app:get_vertex(origin_pos):get_id()
+    self.destination_id = app:get_vertex(destination_pos):get_id()
     self.queue = {}
     self.visited = {}
     self.found = false
-    self.origin = BFSNode.new(app:get_vertex(self.origin_pos), nil, nil)
+    self.origin = BFSNode.new(app:get_vertex(origin_pos), nil, nil)
     self.destination = nil
     table.insert(self.queue, self.origin) -- Add the origin node to the queue
     return self
@@ -60,7 +60,7 @@ end
 --- Executes the Breadth First Search algorithm
 function BFS:run()
     app:log("$Algorithm Breadth First Search (BFS)")
-    app:log("$Trying find a way from " .. self.origin_pos .. " to " .. self.destination_pos)
+    app:log("$Trying find a way from " .. self.origin_id .. " to " .. self.destination_id)
     local start_time = os.clock()
     while #self.queue > 0 and not self.found do
         local current = table.remove(self.queue, 1)
@@ -71,7 +71,7 @@ function BFS:run()
             current.edge:set_state(State.TESTING)
         end
 
-        if current.vertex:get_id() == self.destination_pos then
+        if current.vertex:get_id() == self.destination_id then
             self.found = true
             app:log("$Destination found!")
             app:set_solved(true)
@@ -137,8 +137,8 @@ local function main()
     math.randomseed(os.time())
     local vertex_size = app:get_vertex_size()
     -- Get random origin and destination vertex from graph
-    local orig = app:get_vertex(math.random(1, vertex_size)):get_id()
-    local dest = app:get_vertex(math.random(1, vertex_size)):get_id()
+    local orig = math.random(1, vertex_size)
+    local dest = math.random(1, vertex_size)
     BFS.new(orig, dest):run()
 end
 

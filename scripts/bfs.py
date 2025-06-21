@@ -87,6 +87,8 @@ class BFS:
         """
         self.origin_pos = origin_pos
         self.destination_pos = destination_pos
+        self.origin_id = app.get_vertex(self.origin_pos).get_id()
+        self.destination_id = app.get_vertex(self.destination_pos).get_id()
         self.queue = []
         self.visited = []
         self.found = False
@@ -97,18 +99,18 @@ class BFS:
     def run(self):
         """Executes the Breadth First Search algorithm"""
         app.log(f"$Algorithm Breadth First Search (BFS)")
-        app.log(f"$Trying find a way from {self.origin_pos} to {self.destination_pos}")
+        app.log(f"$Trying find a way from {self.origin_id} to {self.destination_id}")
         start_time = time.perf_counter()
 
         while self.queue and not self.found:
-            current = self.queue.pop(0)  # Remove o primeiro da fila
+            current = self.queue.pop(0)  # Remove the first in the queue
             self.visited.append(current)
 
             current.vertex.set_state(State.TESTING)
             if current.edge:
                 current.edge.set_state(State.TESTING)
 
-            if current.vertex.get_id() == self.destination_pos:
+            if current.vertex.get_id() == self.destination_id:
                 self.found = True
                 app.log("$Destination found!")
                 app.set_solved(True)
@@ -116,7 +118,7 @@ class BFS:
                 break
 
             edge_size = current.vertex.get_edge_size()
-            for i in range(edge_size):  # Lua indexa em 1, Python em 0, ajustamos
+            for i in range(edge_size):
                 edge = current.vertex.get_edge(i)
                 neighbor = current.vertex.get_adjacent(edge)
                 if neighbor.get_state() != State.TESTING:
@@ -162,6 +164,6 @@ random starting and random destination vertex.
 """
 random.seed(time.time())
 vertex_size = app.get_vertex_size()
-orig = app.get_vertex(random.randint(0, vertex_size-1)).get_id()
-dest = app.get_vertex(random.randint(0, vertex_size-1)).get_id()
+orig = random.randint(0, vertex_size-1)
+dest = random.randint(0, vertex_size-1)
 BFS(orig, dest).run()

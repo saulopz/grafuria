@@ -40,10 +40,10 @@ DFS.__index = DFS
 ---@param destination_pos integer The end vertex point
 function DFS.new(origin_pos, destination_pos)
     local self = setmetatable({}, DFS)
-    self.origin_pos = origin_pos
-    self.destination_pos = destination_pos
+    self.origin_id = app:get_vertex(origin_pos).get_id()
+    self.destination_id = app:get_vertex(destination_pos).get_id()
     self.found = false -- Flag to know if the destination was found
-    self.origin = DFSNode.new(app:get_vertex(self.origin_pos), nil)
+    self.origin = DFSNode.new(app:get_vertex(origin_pos), nil)
     self.path = ""
     return self
 end
@@ -51,7 +51,7 @@ end
 --- Executes the Depth-First Search algorithm
 function DFS:run()
     app:log("$Algorithm Depth-First Search (DFS)")
-    app:log("$Trying find a way from " .. self.origin_pos .. " to " .. self.destination_pos)
+    app:log("$Trying find a way from " .. self.origin_id .. " to " .. self.destination_id)
     local start_time = os.clock()
     if self.origin then
         self:visit(self.origin)
@@ -83,7 +83,7 @@ function DFS:visit(current)
         if vertex_neighbor and vertex_neighbor:get_state() == State.NONE then
             edge:set_state(State.TESTING)
             vertex_neighbor:set_state(State.TESTING)
-            if vertex_neighbor:get_id() == self.destination_pos then
+            if vertex_neighbor:get_id() == self.destination_id then
                 self.found = true
                 app:set_solved(true)
                 vertex_neighbor:set_state(State.ACTIVE)
@@ -119,8 +119,8 @@ local function main()
     -- Initializes the random number generator seed
     math.randomseed(os.time())
     local vertex_size = app:get_vertex_size()
-    local orig = app:get_vertex(math.random(1, vertex_size)):get_id()
-    local dest = app:get_vertex(math.random(1, vertex_size)):get_id()
+    local orig = math.random(1, vertex_size)
+    local dest = math.random(1, vertex_size)
     DFS.new(orig, dest):run()
 end
 

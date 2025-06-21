@@ -8,8 +8,8 @@
 /*.cvs
 
 # Include the 'graph' subfolder and its files, but not its subdirectories
-!graph/
-graph/*/
+!graphs/
+graphs/*/
 
 # Include the 'lua' subfolder and its files, but not its subdirectories
 !scripts/

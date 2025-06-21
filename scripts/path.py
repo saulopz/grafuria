@@ -36,7 +36,7 @@ def first_path(root):
 
 vertex_size = app.get_vertex_size()
 
-# Escolhe vértice inicial
+# Choose the initial vertex
 begin = None
 begin_var = app.get_var("begin")
 if begin_var == -1:
@@ -46,7 +46,7 @@ if begin_var == -1:
 else:
     begin = app.get_vertex(begin_var)
 
-# Define vértice final, se existir
+# Define the final vertex
 end_var = app.get_var("end")
 if end_var > -1:
     end_vertex = end_var

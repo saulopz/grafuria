@@ -16,7 +16,7 @@ class VertexProxy:
         return self._vertex.get_x()
 
     def get_y(self):
-        self._vertex.get_y()
+        return self._vertex.get_y()
 
     def get_coords(self):
         return self._vertex.get_coords()

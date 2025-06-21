@@ -39,3 +39,9 @@ class AppProxy:
         if self._app.script_type == ScriptType.LUA:
             aux = 1
         return VertexProxy(self._app, self._app.get_vertex(index - aux))
+    
+    def get_vertex_by_id(self, vertex_id):
+        vertex = self._app.get_vertex_by_id(vertex_id)
+        if vertex is None:
+            return None
+        return VertexProxy(self._app, self._app.get_vertex_by_id(vertex_id))

@@ -135,6 +135,25 @@ class App(tk.Frame):
         if index < 0 or index >= self.get_vertex_size():
             return None
         return self.vertex[index]
+    
+    # -------------------------
+    # Get Vertex By ID
+    # -------------------------
+    def get_vertex_by_id(self, vertex_id) -> Vertex | None:
+        """
+        Returns a vertex by its ID.
+
+        Parameters
+        ----------
+        vertex_id: str
+            ID of the vertex to be retrieved.
+
+        Returns
+        -------
+        Vertex | None
+            The vertex with the specified ID, or None if not found.
+        """
+        return self.vertex_dict.get(vertex_id, None)
 
     # -------------------------
     # Area Add
@@ -155,7 +174,7 @@ class App(tk.Frame):
     # -------------------------
     def area_close(self):
         """
-        Close the area poligon and create it.
+        Close the area polygon and create it.
         """
         area = self.area
         self.canvas.create_polygon(
@@ -528,10 +547,7 @@ class App(tk.Frame):
         self.status_frame.pack(fill=tk.X)
 
         # Status information
-        # self.line_count_label = ttk.Label(self.status_frame, text="Lines: 0")
         self.status_bar_info = ttk.Label(self.status_frame, text="Info: ")
-
-        # self.line_count_label.pack(side=tk.LEFT, padx=10)
         self.status_bar_info.pack(side=tk.LEFT, padx=10)
 
     # -------------------------
@@ -795,7 +811,7 @@ class App(tk.Frame):
     # Python Execute
     # -------------------------
     def python_execute(self):
-        """Executa um script Python se carregado"""
+        """Run a Python script."""
         self.init_dicts()
         try:
             app_proxy = AppProxy(self)
@@ -813,7 +829,7 @@ class App(tk.Frame):
             exec(python_script, exec_globals)
             self.save_execution_history()
         except Exception as e:
-            self.log(f"[Erro no script Python] {e}", True)
+            self.log(f"[Python script error] {e}", True)
 
         if self.solved:
             self.canvas.configure(bg=App.COLOR_BG_SOLVED)
@@ -898,7 +914,7 @@ class App(tk.Frame):
         """Show a 'message' dialog with some error"""
         root = tk.Tk()
         root.withdraw()  # Hide main window
-        messagebox.showerror("Erro Lua", message)
+        messagebox.showerror("Script error", message)
 
     # -------------------------
     # Step
@@ -1132,14 +1148,14 @@ class App(tk.Frame):
             title="Open an algorithm file",
             initialdir="scripts",
             filetypes=[
-                ("Algorithm Scripts", "*.lua *.py *.gpy *.algpy"),
+                ("Algorithm Scripts", "*.lua *.py *.gpy"),
                 ("Lua Scripts", "*.lua"),
-                ("Python Scripts", "*.py *.gpy *.algpy"),
+                ("Python Scripts", "*.py"),
             ],
         )
 
         if filename:
-            # Waranty that the file is inside the scripts folder
+            # Warranty that the file is inside the scripts folder
             # This is to avoid opening files from the app folder or other locations
             if not os.path.abspath(filename).startswith(os.path.abspath("scripts")):
                 self.show_error_alert("Only scripts inside the 'scripts/' folder can be opened.")
@@ -1152,27 +1168,6 @@ class App(tk.Frame):
                 print("Error: File not found.")
         else:
             print("No file selected.")
-
-    '''
-    def open_script_file(self) -> None:
-        """Open the algorithm file dialog (in Lua language)."""
-        self.event_stop()
-        filename = askopenfilename(  # Opening the file selection window.
-            title="Open an algorithm file",
-            initialdir="scripts",
-            filetypes=[("script files", "*.lua")],
-        )
-        if filename:
-            if os.path.isfile(filename):
-                self.script_lua = filename  # Atualiza o caminho do script
-                self.script_properties = Properties(
-                    self.script_properties_frame, self.script_lua
-                )
-            else:
-                print("Error: File not found.")
-        else:
-            print("No file selected.")
-    '''
 
     # -------------------------
     # Load Graph File
@@ -1279,4 +1274,4 @@ class App(tk.Frame):
         self.edge.clear()
         Edge.id = 0
         self.canvas.delete("all")
-        self.graph_label.config(text="Clique aqui")
+        self.graph_label.config(text="Click here.")
