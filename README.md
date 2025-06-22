@@ -196,4 +196,4 @@ These scripts randomly choose two vertices and find paths using different strate
 
 ---
 
-For questions or contributions, feel free to contact the author or open a GitHub issue. Happy graphing!
+For questions or contributions, feel free to contact the author. Happy graphing!
