@@ -339,8 +339,8 @@ class Vertex:
         if selected is not None and self.app.selected.type == self.app.VERTEX:
             if not self.is_connected(self.app.selected):
                 e = Edge(self.app.selected, self, 1, self.app)
-                e.a = self
-                e.b = self.app.selected
+                e.a = self.app.selected
+                e.b = self
                 e.b.neighbor[e.a.get_id()] = e
                 e.a.neighbor[e.b.get_id()] = e
                 self.edge.append(e)

@@ -1,4 +1,5 @@
-app: "AppProxy" # type: ignore
+app: "AppProxy"  # type: ignore
+
 
 class State:
     NONE = 0
@@ -6,9 +7,11 @@ class State:
     ACTIVE = 2
     INVALID = 3
 
+
 path = []
 end_vertex = None
 found = False
+
 
 def first_path(root):
     global found
@@ -30,9 +33,11 @@ def first_path(root):
                 return first_path(adjacent) + 1
     return 0
 
+
 # --------------------------
 # MAIN
 # --------------------------
+
 
 vertex_size = app.get_vertex_size()
 
@@ -40,7 +45,9 @@ vertex_size = app.get_vertex_size()
 begin = None
 begin_var = app.get_var("begin")
 if begin_var == -1:
-    import random, time
+    import random
+    import time
+
     random.seed(time.time())
     begin = app.get_vertex(random.randint(1, vertex_size))
 else:

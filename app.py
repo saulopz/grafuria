@@ -55,7 +55,7 @@ class App(tk.Frame):
         """
         super().__init__(master)
         self.script = script_lua
-        self.script_type = ScriptType.NONE        
+        self.script_type = ScriptType.NONE
         self.script_properties = None
         self.script_properties_frame = None
         self.config_file = "settings.json"
@@ -82,6 +82,7 @@ class App(tk.Frame):
         self.initial_time = time.time()
         self.final_time = time.time()
         self.stopped = True
+        self.paused = False
         self.filename: str = ""
         if filename != "":
             self.load_graph_file(filename)
@@ -135,7 +136,7 @@ class App(tk.Frame):
         if index < 0 or index >= self.get_vertex_size():
             return None
         return self.vertex[index]
-    
+
     # -------------------------
     # Get Vertex By ID
     # -------------------------
@@ -290,6 +291,9 @@ class App(tk.Frame):
         self.icon_play = ImageTk.PhotoImage(
             Image.open("res/circle-play-regular.png").resize((20, 20))
         )
+        self.icon_pause = ImageTk.PhotoImage(
+            Image.open("res/circle-pause-regular.png").resize((20, 20))
+        )
         self.icon_stop = ImageTk.PhotoImage(
             Image.open("res/circle-stop-regular.png").resize((20, 20))
         )
@@ -301,6 +305,9 @@ class App(tk.Frame):
         self.bt_play = ttk.Button(
             button_frame, image=self.icon_play, command=self.event_play
         )
+        self.bt_pause = ttk.Button(
+            button_frame, image=self.icon_pause, command=self.event_pause
+        )
         self.bt_stop = ttk.Button(
             button_frame, image=self.icon_stop, command=self.event_stop
         )
@@ -309,7 +316,7 @@ class App(tk.Frame):
         )
 
         # Packing buttons
-        for widget in [self.bt_play, self.bt_stop, self.bt_clear]:
+        for widget in [self.bt_play, self.bt_pause, self.bt_stop, self.bt_clear]:
             widget.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Control for "Graph"
@@ -734,6 +741,12 @@ class App(tk.Frame):
         self.status_bar_info.config(text=f"Info: {text}")
 
     # -------------------------
+    # Event Pause
+    # -------------------------
+    def event_pause(self) -> None:
+        self.paused = True
+
+    # -------------------------
     # Event Play
     # -------------------------
     def event_play(self) -> None:
@@ -741,6 +754,9 @@ class App(tk.Frame):
         It is executed when the play button is pressed, starting the
         execution of an algorithm on a graph.
         """
+        if self.paused:
+            self.paused = False
+            return
         if not self.script:
             self.show_error_alert("You need a graph and an algorithm to run.")
             return
@@ -748,7 +764,7 @@ class App(tk.Frame):
         self.event_clear()
         self.canvas.configure(bg=App.COLOR_BG_RUNNING)
         self.editing = False
-       
+
         if self.selected is not None:
             self.selected.unselect()
         if self.selected_edge is not None:
@@ -769,6 +785,7 @@ class App(tk.Frame):
                     self.log(f"Unsupported script extension: {ext}", True)
             except Exception as e:
                 self.log(f"Error executing script: {e}", True)
+
         # --------------------------------------
 
         a = Thread(target=_run_script)
@@ -784,7 +801,7 @@ class App(tk.Frame):
         """Executes a script lua if loaded"""
         self.init_dicts()
         try:
-            lua = LuaRuntime(unpack_returned_tuples=True) # type: ignore
+            lua = LuaRuntime(unpack_returned_tuples=True)  # type: ignore
             app_proxy = AppProxy(self)
             lua.globals().State = {
                 "NONE": State.NONE,
@@ -805,7 +822,6 @@ class App(tk.Frame):
             self.canvas.configure(bg=App.COLOR_BG_FAILED)
         if not self.animation:
             self.draw()
-
 
     # -------------------------
     # Python Execute
@@ -883,7 +899,7 @@ class App(tk.Frame):
             )
 
             with open(file_path, "a") as f:
-                '''
+                """
                 f.write(
                     f.write(
                         f"{timestamp}\t"
@@ -893,14 +909,22 @@ class App(tk.Frame):
                         f"{self.solved}\n"
                     )
                 )
-                '''
-                line = "\t".join(map(str, [
-                    timestamp,
-                    graph,
-                    script,
-                    execution_time,
-                    self.solved,
-                ])) + "\n"
+                """
+                line = (
+                    "\t".join(
+                        map(
+                            str,
+                            [
+                                timestamp,
+                                graph,
+                                script,
+                                execution_time,
+                                self.solved,
+                            ],
+                        )
+                    )
+                    + "\n"
+                )
                 f.write(line)
 
         except Exception as e:
@@ -928,6 +952,8 @@ class App(tk.Frame):
         0 to 10, with the value 10 having no SLEEP. This value is
         adjusted in the graphical interface.
         """
+        while self.paused:
+            time.sleep(0.1)
         speed = self.get_speed()
         if speed < 10:
             t = (self.get_speed_max() - speed) ** 2 / 100
@@ -938,6 +964,7 @@ class App(tk.Frame):
     # -------------------------
     def event_stop(self) -> None:
         """Stop the algorithm execution."""
+        self.paused = False
         self.stopped = True
 
     # -------------------------
@@ -952,6 +979,7 @@ class App(tk.Frame):
     # -------------------------
     def event_clear(self) -> None:
         """Change state of all edges and vertices of graph to NONE."""
+        self.paused = False
         self.stopped = True
         self.clear_log()
         self.canvas.configure(bg=App.COLOR_BG)
@@ -1156,14 +1184,20 @@ class App(tk.Frame):
 
         if filename:
             # Warranty that the file is inside the scripts folder
-            # This is to avoid opening files from the app folder or other locations
-            if not os.path.abspath(filename).startswith(os.path.abspath("scripts")):
-                self.show_error_alert("Only scripts inside the 'scripts/' folder can be opened.")
+            # This is to avoid opening files from the app folder
+            # or other locations
+            path = os.path.abspath("scripts")
+            if not os.path.abspath(filename).startswith(path):
+                self.show_error_alert(
+                    "Only scripts inside the 'scripts/' folder can be opened."
+                )
                 return
 
             if os.path.isfile(filename):
                 self.script = filename
-                self.script_properties = Properties(self.script_properties_frame, self.script)
+                self.script_properties = Properties(
+                    self.script_properties_frame, self.script
+                )
             else:
                 print("Error: File not found.")
         else:
