@@ -1089,7 +1089,10 @@ class App(tk.Frame):
     # -------------------------
     # Get Graph
     # -------------------------
+    '''
     def get_graph(self) -> str:
+        self.reindexing_graph()
+
         """Create a string with graph information in JSON format."""
         vertex: list[Vertex] = []
         for v in self.vertex:
@@ -1102,6 +1105,40 @@ class App(tk.Frame):
             "bidirectional": self.bidirectional,
             "vertex": vertex,
             "edge": edge,
+        }
+        return json.dumps(obj)
+    '''
+
+    # -------------------------
+    # Get Graph
+    # -------------------------
+    def get_graph(self) -> str:
+        # 1. Mapeia ID antigo -> Novo ID (0, 1, 2...)
+        v_map = {v.id: i for i, v in enumerate(self.vertex)}
+
+        # 2. Gera a lista de JSON de vértices com IDs novos
+        vertex_json: list[dict] = []
+        for i, v in enumerate(self.vertex):
+            v_data = v.get_json()
+            v_data["id"] = i  # Reindexa apenas aqui no dicionário temporário
+            vertex_json.append(v_data)
+
+        # 3. Gera a lista de JSON de arestas traduzindo as conexões
+        edge_json: list[dict] = []
+        for i, e in enumerate(self.edge):
+            e_data = e.get_json()
+            e_data["id"] = i
+            # Traduzimos a referência usando o mapa, mas sem alterar e.a original
+            e_data["a"] = v_map[e.a.id]
+            e_data["b"] = v_map[e.b.id]
+            edge_json.append(e_data)
+
+        self.log(f"$bidirectional {self.bidirectional} (reindexed for benchmark)")
+
+        obj = {
+            "bidirectional": self.bidirectional,
+            "vertex": vertex_json,
+            "edge": edge_json,
         }
         return json.dumps(obj)
 

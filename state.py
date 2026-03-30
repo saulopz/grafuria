@@ -36,3 +36,5 @@ class State:
     TESTING = 1
     ACTIVE = 2
     INVALID = 3
+    TESTING_A = 4
+    TESTING_B = 5

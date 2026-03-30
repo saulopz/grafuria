@@ -4,7 +4,7 @@ Author: Saulo Popov Zambiasi
 E-mail: [saulopz@gmail.com](mailto:saulopz@gmail.com)
 
 Created: 2024-10-25  
-Last Update: 2025-06-20  
+Last Update: 2026-03-30  
 Version: 1.0
 
 ---

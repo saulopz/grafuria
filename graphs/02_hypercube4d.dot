@@ -1,0 +1,61 @@
+// Graph name: graphs/02_hypercube4d.json
+// Algorithm : Nemertea
+// Run time  : 
+// Date      : 
+graph G {
+	layout=neato;
+	overlap=false;
+	splines=true;
+	node [pin=true];
+	node [shape=circle, width=1.0, height=1.0, fixedsize=true, style=filled, fillcolor="lightblue"];
+
+	V1 [label="", style=filled, pos="10.4,27.1!", fillcolor="black", color="black"];
+	V2 [label="", style=filled, pos="40.5,1.8!", fillcolor="black", color="black"];
+	V3 [label="", style=filled, pos="67.5,26.7!", fillcolor="black", color="black"];
+	V4 [label="", style=filled, pos="38.8,55.4!", fillcolor="black", color="black"];
+	V5 [label="", style=filled, pos="60.5,9.3!", fillcolor="black", color="black"];
+	V6 [label="", style=filled, pos="16.6,9.5!", fillcolor="black", color="black"];
+	V7 [label="", style=filled, pos="16.3,47.4!", fillcolor="black", color="black"];
+	V8 [label="", style=filled, pos="61.9,47!", fillcolor="black", color="black"];
+	V9 [label="", style=filled, pos="40.6,15!", fillcolor="black", color="black"];
+	V10 [label="", style=filled, pos="39.6,38.5!", fillcolor="black", color="black"];
+	V11 [label="", style=filled, pos="50.6,26.3!", fillcolor="black", color="black"];
+	V12 [label="", style=filled, pos="28.2,27!", fillcolor="black", color="black"];
+	V13 [label="", style=filled, pos="30.6,18!", fillcolor="black", color="black"];
+	V14 [label="", style=filled, pos="30.2,35.2!", fillcolor="black", color="black"];
+	V15 [label="", style=filled, pos="49.4,34.7!", fillcolor="black", color="black"];
+	V16 [label="", style=filled, pos="51.1,17.6!", fillcolor="black", color="black"];
+
+	V2 -- V6 [color="black", penwidth=50.0];
+	V1 -- V6 [color="blue", penwidth=10.0];
+	V12 -- V6 [color="blue", penwidth=10.0];
+	V9 -- V6 [color="black", penwidth=50.0];
+	V2 -- V5 [color="black", penwidth=50.0];
+	V9 -- V5 [color="blue", penwidth=10.0];
+	V11 -- V5 [color="black", penwidth=50.0];
+	V3 -- V5 [color="blue", penwidth=10.0];
+	V3 -- V8 [color="black", penwidth=50.0];
+	V11 -- V8 [color="blue", penwidth=10.0];
+	V10 -- V8 [color="blue", penwidth=10.0];
+	V4 -- V8 [color="black", penwidth=50.0];
+	V1 -- V7 [color="black", penwidth=50.0];
+	V12 -- V7 [color="blue", penwidth=10.0];
+	V10 -- V7 [color="blue", penwidth=10.0];
+	V4 -- V7 [color="black", penwidth=50.0];
+	V13 -- V1 [color="blue", penwidth=10.0];
+	V14 -- V1 [color="black", penwidth=50.0];
+	V16 -- V3 [color="blue", penwidth=10.0];
+	V15 -- V3 [color="black", penwidth=50.0];
+	V15 -- V4 [color="blue", penwidth=10.0];
+	V14 -- V4 [color="blue", penwidth=10.0];
+	V16 -- V2 [color="blue", penwidth=10.0];
+	V13 -- V2 [color="blue", penwidth=10.0];
+	V14 -- V9 [color="black", penwidth=50.0];
+	V15 -- V9 [color="blue", penwidth=10.0];
+	V13 -- V10 [color="black", penwidth=50.0];
+	V16 -- V10 [color="black", penwidth=50.0];
+	V13 -- V11 [color="black", penwidth=50.0];
+	V14 -- V11 [color="blue", penwidth=10.0];
+	V16 -- V12 [color="black", penwidth=50.0];
+	V12 -- V15 [color="black", penwidth=50.0];
+}

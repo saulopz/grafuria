@@ -335,9 +335,9 @@ class Edge:
         if self not in self.a.edge or self not in self.b.edge:
             return
         self.a.edge.remove(self)
-        self.a.neighbor.pop(b.get_id(), None)
+        self.a.neighbor.pop(self.b.get_id(), None)
         self.b.edge.remove(self)
-        self.b.neighbor.pop(a.get_id(), None)
+        self.b.neighbor.pop(self.a.get_id(), None)
         self.canvas.delete(str(self.canvas_id))  # Remove line from canvas.
         self.canvas.delete(str(self.text_id))  # Remove text from canvas.
         self.app.edge.remove(self)
