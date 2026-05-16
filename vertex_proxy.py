@@ -3,6 +3,9 @@ class VertexProxy:
         self._app = app
         self._vertex = vertex
 
+    def get_type(self):
+        return "VertexProxy"
+
     def get_raw_vertex(self):
         return self._vertex
 
@@ -26,6 +29,12 @@ class VertexProxy:
 
     def set_state(self, state):
         self._vertex.set_state(state)
+
+    def set_var(self, name, value):
+        self._vertex.set_var(name, value)
+
+    def get_var(self, name):
+        return self._vertex.get_var(name)
 
     def is_connected(self, other):
         return self._vertex.is_connected(other.get_raw_vertex())

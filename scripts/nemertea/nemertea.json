@@ -1,0 +1,6 @@
+{
+    "cycle": true,
+    "deep": 7,
+    "deep_min": 1,
+    "deep_max": 20
+}

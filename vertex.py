@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple, Union
 import tkinter as tk
 from state import State
 from edge import Edge
+import random
 
 
 # -------------------------
@@ -44,6 +45,7 @@ class Vertex:
         self.name: str = name
         self.x: int = x
         self.y: int = y
+        self.vars = {}
         self.state: int = State.NONE
         if id == -1:
             Vertex.id = Vertex.id + 1
@@ -76,6 +78,9 @@ class Vertex:
         self.canvas.tag_bind(self.canvas_id, "<Any-Enter>", self.mouse_enter)
         self.canvas.tag_bind(self.canvas_id, "<Any-Leave>", self.mouse_leave)
 
+    def get_type(self):
+        return "Vertex"
+
     # -------------------------
     # Get JSON
     # -------------------------
@@ -90,6 +95,32 @@ class Vertex:
             "x": self.x,
             "y": self.y,
         }
+
+    # -------------------------
+    # Shuffle Edges
+    # -------------------------
+    def shuffle_edges(self) -> None:
+        random.shuffle(self.edge)
+
+    # -------------------------
+    # Set Var
+    # -------------------------
+    def set_var(self, name, value):
+        """
+        Atribui um valor a um atributo dinâmico. 
+        Lembre-se: em um sistema soberano, a clareza do dado é sua maior defesa.
+        """
+        self.vars[name] = value
+
+    # -------------------------
+    # Get Var
+    # -------------------------
+    def get_var(self, name):
+        """
+        Retorna o valor do atributo ou None se ele não existir.
+        O ceticismo aqui é automatizado pelo segundo argumento de getattr.
+        """
+        return self.vars.get(name, None)
 
     # -------------------------
     # Get ID
@@ -303,6 +334,13 @@ class Vertex:
     def mouse_down(self, event: tk.Event) -> None:
         """Event called when mouse was clicked over this vertex."""
         if not self.app.editing:
+            if self.app.debug:
+                if self.state == State.ACTIVE:
+                    self.state = State.NONE
+                else:
+                    self.state = State.ACTIVE
+                self.app.draw()
+                return
             self.app.set_statusbar(f"Vertex: {self.id}")
             return
         if self.app.selected is not None:

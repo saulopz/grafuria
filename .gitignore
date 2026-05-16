@@ -2,7 +2,7 @@
 /*
 
 # Include all files in the project root folder
-!/*
+!/*.*
 
 # Ignore
 /*.cvs
@@ -14,6 +14,7 @@ graphs/*/
 # Include the 'lua' subfolder and its files, but not its subdirectories
 !scripts/
 scripts/*/
+!scripts/nemertea/
 
 # Include the 'res' subfolder and all its files and subdirectories
 !res/
@@ -23,3 +24,4 @@ __pycache__/
 .vscode/
 .git/
 .idea/
+teste/

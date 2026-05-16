@@ -110,6 +110,9 @@ class Edge:
             fill="black",
             tags="text",
         )
+        if not self.app.show_weight:
+            self.canvas.itemconfig(self.text_id, state="hidden")
+
 
         self.canvas.tag_lower(self.canvas_id)
         self.canvas.tag_bind(self.canvas_id, "<Button-1>", self.mouse_down)
@@ -130,6 +133,9 @@ class Edge:
             "b": self.b.id,
             "weight": self.weight,
         }
+
+    def get_type(self):
+        return "Edge"
 
     # -------------------------
     # Get ID
@@ -231,6 +237,10 @@ class Edge:
                 fill=self.app.COLOR_INVALID,
                 width=2,
             )
+        if self.app.show_weight:
+            self.canvas.itemconfig(self.text_id, state="normal")
+        else:
+            self.canvas.itemconfig(self.text_id, state="hidden")
 
     # -------------------------
     # On Mouse Enter
@@ -273,6 +283,13 @@ class Edge:
     def mouse_down(self, event: tk.Event) -> None:
         """Event called when mouse was clicked over this edge."""
         if not self.app.editing:
+            if self.app.debug:
+                if self.state == State.ACTIVE:
+                    self.state = State.NONE
+                else:
+                    self.state = State.ACTIVE
+                self.app.draw()
+                return
             self.app.set_statusbar("Edge: " + str(self.id))
             return
         if self.app.selected_edge is not None:

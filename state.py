@@ -33,8 +33,10 @@ class State:
     """
 
     NONE = 0
-    TESTING = 1
-    ACTIVE = 2
-    INVALID = 3
-    TESTING_A = 4
-    TESTING_B = 5
+    ACTIVE = 1
+    TESTING = 2
+    SCOUT = 3
+
+    INVALID = 4
+    TESTING_A = 5
+    TESTING_B = 6

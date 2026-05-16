@@ -31,6 +31,7 @@ class App(tk.Frame):
     COLOR_BG = "white"
     COLOR_BG_SOLVED = "#f5f5dc"  # "#ffffee"
     COLOR_BG_FAILED = "#ffaaaa"
+    COLOR_BG_DEBUG = "#eeeeff"
     COLOR_BG_RUNNING = "#e8f0ff"  # "cyan"
 
     COLOR_NONE = "gold"  # "black" #"yellow"
@@ -62,6 +63,8 @@ class App(tk.Frame):
         self.var_log_symbols = ""
         self.title = "Grafuria"
         self.editing: bool = True
+        self.debug: bool = False
+        self.var_show_weight = tk.BooleanVar(value=True)
         self.var_animation = tk.BooleanVar(value=True)
         self.var_execution_time_log = tk.BooleanVar(value=True)
         self.load_configuration()
@@ -300,6 +303,9 @@ class App(tk.Frame):
         self.icon_clear = ImageTk.PhotoImage(
             Image.open("res/rotate-solid.png").resize((20, 20))
         )
+        self.icon_debug = ImageTk.PhotoImage(
+            Image.open("res/circle-debug-regular.png").resize((20, 20))
+        )
 
         # Adding buttons
         self.bt_play = ttk.Button(
@@ -314,9 +320,12 @@ class App(tk.Frame):
         self.bt_clear = ttk.Button(
             button_frame, image=self.icon_clear, command=self.event_clear
         )
+        self.bt_debug = ttk.Button(
+            button_frame, image=self.icon_debug, command=self.event_debug
+        )
 
         # Packing buttons
-        for widget in [self.bt_play, self.bt_pause, self.bt_stop, self.bt_clear]:
+        for widget in [self.bt_play, self.bt_pause, self.bt_stop, self.bt_clear, self.bt_debug]:
             widget.pack(side=tk.LEFT, padx=5, pady=5)
 
         # Control for "Graph"
@@ -346,6 +355,19 @@ class App(tk.Frame):
         )
         self.script_label.pack(side="right", fill="x")
         self.script_label.bind("<Button-1>", self.on_script_click)
+
+        # Control for "Show Weight"
+        show_weight_frame = ttk.Frame(self.config_frame)
+        show_weight_frame.pack(fill="x", padx=10, pady=0)
+        tk.Label(show_weight_frame, text="Show Weight:").pack(side="left", pady=0)
+        self.show_weight = tk.Checkbutton(
+            show_weight_frame,
+            variable=self.var_show_weight,
+            onvalue=True,
+            offvalue=False,
+            command=self.on_show_weight_change,
+        )
+        self.show_weight.pack(side="right")
 
         # Control for "Animation"
         animation_frame = ttk.Frame(self.config_frame)
@@ -657,6 +679,16 @@ class App(tk.Frame):
         name = os.path.splitext(os.path.basename(self.script))[0]
         self.script_label.config(text=name)
 
+
+    # -------------------------
+    # Om Show Weight Change
+    # -------------------------
+    def on_show_weight_change(self):
+        """Change variable that control show weight"""
+        self.save_configuration()
+        self.show_weight = self.var_show_weight.get()
+        self.draw()
+
     # -------------------------
     # Om Animation Change
     # -------------------------
@@ -764,6 +796,7 @@ class App(tk.Frame):
         self.event_clear()
         self.canvas.configure(bg=App.COLOR_BG_RUNNING)
         self.editing = False
+        self.debug = False
 
         if self.selected is not None:
             self.selected.unselect()
@@ -984,12 +1017,23 @@ class App(tk.Frame):
         self.clear_log()
         self.canvas.configure(bg=App.COLOR_BG)
         self.editing = True
+        self.debug = False
         for v in self.vertex:
             v.set_state(State.NONE)
+            # v.active_edges = 0
         for e in self.edge:
             e.set_state(State.NONE)
         self.canvas.delete("area")
         self.draw()
+
+    # -------------------------
+    # Event Debug
+    # -------------------------
+    def event_debug(self) -> None:
+        if self.editing == False:
+            self.debug = True
+            self.canvas.configure(bg=App.COLOR_BG_DEBUG)
+            self.draw()
 
     # -------------------------
     # Update Entry Speed
@@ -1086,30 +1130,7 @@ class App(tk.Frame):
         """Open the about window."""
         tk.messagebox.askquestion("About", "Hamiltonian Cycle", icon="info")
 
-    # -------------------------
-    # Get Graph
-    # -------------------------
-    '''
-    def get_graph(self) -> str:
-        self.reindexing_graph()
-
-        """Create a string with graph information in JSON format."""
-        vertex: list[Vertex] = []
-        for v in self.vertex:
-            vertex.append(v.get_json())
-        edge: list[Edge] = []
-        for e in self.edge:
-            edge.append(e.get_json())
-        self.log(f"$bidirectional {self.bidirectional}")
-        obj = {
-            "bidirectional": self.bidirectional,
-            "vertex": vertex,
-            "edge": edge,
-        }
-        return json.dumps(obj)
-    '''
-
-    # -------------------------
+     # -------------------------
     # Get Graph
     # -------------------------
     def get_graph(self) -> str:
@@ -1283,6 +1304,9 @@ class App(tk.Frame):
                 b.neighbor[a.get_id()] = edge
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
+            for v in self.vertex:
+                v.shuffle_edges()
+
             name = os.path.splitext(os.path.basename(self.filename))[0]
             self.master.title(f"{self.title} : {name}")
             self.graph_label.config(text=name)
@@ -1299,6 +1323,7 @@ class App(tk.Frame):
     def save_configuration(self):
         """Save configuration file."""
         config = {
+            "show_weight": self.var_show_weight.get(),
             "animation": self.var_animation.get(),
             "speed": self.var_speed.get(),
             "logs_symbols": self.var_logs_field.get(),
@@ -1316,6 +1341,8 @@ class App(tk.Frame):
             with open(self.config_file, "r") as f:
                 j = json.load(f)
                 self.var_animation.set(j.get("animation", True))
+                self.var_show_weight.set(j.get("show_weight", True))
+                self.show_weight = self.var_show_weight.get()
                 self.animation = self.var_animation.get()
                 self.speed = j.get("speed", 10)
                 self.var_execution_time_log.set(
@@ -1325,6 +1352,7 @@ class App(tk.Frame):
                 self.var_log_symbols = j.get("logs_symbols", "")
         else:
             self.bidirectional = True
+            self.show_weight = True
             self.animation = True
             self.speed = 10
             self.execution_time_log = False

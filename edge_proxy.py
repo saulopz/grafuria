@@ -3,6 +3,9 @@ class EdgeProxy:
         self._app = app
         self._edge = edge
 
+    def get_type(self):
+        return "EdgeProxy"
+
     def get_raw_edge(self):
         return self._edge
 
@@ -22,7 +25,9 @@ class EdgeProxy:
         self._edge.set_state(state)
 
     def get_adjacent(self, vertex):
-        return self._edge.get_adjacent(vertex.get_raw_vertex())
+        from vertex_proxy import VertexProxy
+        other = self._edge.get_adjacent(vertex.get_raw_vertex())
+        return VertexProxy(self._app, other)
 
     def get_a(self):
         from vertex_proxy import VertexProxy
