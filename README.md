@@ -271,3 +271,8 @@ $ python3 -m unittest discover -s tests
 
 Interface tests need a display; on a server use `xvfb-run -a` before the command.
 
+`ci/run-tests.sh` runs the suite exactly as the continuous integration
+does, on every push to `main`: GitHub Actions (`.github/workflows/`) and
+Codeberg Forgejo Actions (`.forgejo/workflows/`). There, the interface
+tests are required: a missing Tkinter or display is an error, not a skip.
+

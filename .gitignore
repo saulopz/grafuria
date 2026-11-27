@@ -33,3 +33,7 @@ teste/
 
 # Include the source package
 !src/
+
+# CI support files; local CI virtualenv
+!ci/
+/.venv*/

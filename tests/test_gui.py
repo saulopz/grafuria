@@ -21,8 +21,12 @@ try:
     _root = tk.Tk()
     _root.destroy()
     HAS_DISPLAY = True
-except Exception:
+except Exception as e:
     HAS_DISPLAY = False
+    # The CI sets this: there, a missing Tkinter or display is an error,
+    # otherwise the interface tests would be silently skipped.
+    if os.environ.get("GRAFURIA_REQUIRE_GUI"):
+        raise RuntimeError(f"Interface tests required but Tk is unavailable: {e}") from e
 
 try:
     import lupa  # noqa: F401
