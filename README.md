@@ -29,7 +29,7 @@ It allows users to easily construct directed and undirected graphs, assign weigh
 ### Requirements
 
 * Python 3.10 or newer, with Tkinter (on Debian/Ubuntu: `sudo apt install python3-tk`)
-* Python packages: `pip install -r requirements.txt` (`lupa` and `Pillow`)
+* Python packages: `pip install -r requirements.txt` (`lupa`, `Pillow`, and `fastapi`/`uvicorn` for the web interface)
 
 
 ### Launching from Command Line
@@ -68,6 +68,24 @@ $ python3 main.py --headless graph=graphs/dodecahedron.json \
 * `log=#$`: prints script log lines with these prefixes (to stderr).
 * `NAME=VALUE`: overrides a script parameter from its `.json` file.
   Unknown names are rejected.
+
+### Web Interface (prototype)
+
+```sh
+$ python3 main.py --web
+```
+
+Starts a local server and opens the browser. A graph and a script can
+be chosen in the address, which is handy for classes:
+`http://127.0.0.1:8765/?graph=cube.json&script=bfs.lua&play=1`.
+
+> **Local use only.** Scripts run arbitrary Lua/Python code. The
+> server listens on 127.0.0.1 and only accepts its own page; do not
+> expose it to a network.
+
+The prototype loads graphs and runs scripts with live animation.
+Editing (create, connect, drag, delete) is still done in the desktop
+interface below.
 
 ### Using the Interface
 
@@ -246,15 +264,19 @@ src/grafuria/
 │   ├── headless.py       batch runs
 │   ├── settings.py       settings.json
 │   ├── history.py        execution_history.csv
+│   ├── execution.py      play / pause / stop / speed shared by the interfaces
 │   └── state.py          State values
 └── tkui/                 Tkinter interface
     ├── app.py            main window: connects the pieces below
     ├── sidebar.py        buttons, options, script parameters, selection details
-    ├── runner.py         play / pause / stop / speed (the script host)
+    ├── runner.py         script host of the desktop interface
     ├── bridge.py         thread-safe queue between the script and Tkinter
     ├── log_panel.py      log and status bar
     ├── vertex_view.py, edge_view.py, properties.py, about.py, theme.py
     └── icons/
+└── webui/                web interface (prototype)
+    ├── server.py         local FastAPI server, one WebSocket
+    └── static/           page, Cytoscape.js (MIT, bundled for offline use)
 graphs/, scripts/         graphs and algorithms
 tests/                    python3 -m unittest discover -s tests
 ```
@@ -272,7 +294,7 @@ $ python3 -m unittest discover -s tests
 Interface tests need a display; on a server use `xvfb-run -a` before the command.
 
 `ci/run-tests.sh` runs the suite exactly as the continuous integration
-does, on every push to `main`: GitHub Actions (`.github/workflows/`) and
-Codeberg Forgejo Actions (`.forgejo/workflows/`). There, the interface
+does, on every push to `main` in GitHub Actions (`.github/workflows/`).
+A Codeberg workflow (`.forgejo/workflows/`) is included and runs if
+Actions is enabled in the Codeberg repository. There, the interface
 tests are required: a missing Tkinter or display is an error, not a skip.
-

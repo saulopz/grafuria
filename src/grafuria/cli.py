@@ -64,6 +64,11 @@ def main() -> int:
     args = resolve_paths(sys.argv[1:])
     os.chdir(PROJECT_ROOT)
 
+    if "--web" in args:
+        from .webui import server  # needs fastapi and uvicorn
+
+        return server.main([a for a in args if a != "--web"])
+
     if "--headless" in args:
         from .core import headless  # no Tkinter needed
 

@@ -1,0 +1,76 @@
+:root {
+  --panel: #f3f1ec;
+  --ink: #1d1d1f;
+  --muted: #6b6b70;
+  --line: #d8d4cc;
+  --bg: #ffffff;
+  --bg-running: #e8f0ff;
+  --bg-solved: #f5f5dc;
+  --bg-failed: #ffd7d7;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+
+#layout {
+  display: grid;
+  grid-template-columns: 1fr 270px;
+  grid-template-rows: 1fr 150px;
+  height: 100vh;
+}
+
+#stage { position: relative; grid-column: 1; grid-row: 1; border-right: 1px solid var(--line); }
+#cy { position: absolute; inset: 0; background: var(--bg); transition: background .3s; }
+#cy.running { background: var(--bg-running); }
+#cy.solved { background: var(--bg-solved); }
+#cy.failed { background: var(--bg-failed); }
+
+#banner {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 6px 14px; border-radius: 6px; font-size: 14px;
+}
+
+#panel {
+  grid-column: 2; grid-row: 1 / span 2;
+  background: var(--panel); padding: 14px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 10px;
+}
+h1 { font-size: 18px; margin: 0 0 4px; letter-spacing: .04em; }
+h2 { font-size: 13px; margin: 8px 0 0; text-transform: uppercase; color: var(--muted); }
+
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+.field select, .field input[type=text] {
+  font: inherit; color: var(--ink); padding: 5px 6px;
+  border: 1px solid var(--line); border-radius: 4px; background: #fff;
+}
+.check { font-size: 13px; display: flex; gap: 6px; align-items: center; }
+
+.buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+button {
+  font: inherit; font-size: 13px; padding: 6px 8px; cursor: pointer;
+  border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink);
+}
+button:hover { border-color: var(--ink); }
+button:disabled { opacity: .45; cursor: default; }
+
+/* Status: text and symbol, never colour alone. */
+#status {
+  font-size: 14px; padding: 8px; border-radius: 4px;
+  background: #fff; border: 1px solid var(--line);
+}
+#status.solved { border: 2px solid var(--ink); font-weight: 600; }
+#status.failed { border: 2px dashed var(--ink); font-weight: 600; }
+
+#params { margin: 0; font-size: 13px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+#params dt { color: var(--muted); }
+#params dd { margin: 0; }
+
+#log {
+  grid-column: 1; grid-row: 2; overflow-y: auto;
+  font: 12px/1.45 ui-monospace, "DejaVu Sans Mono", monospace;
+  padding: 6px 10px; border-top: 1px solid var(--line); background: #fbfaf8;
+  white-space: pre-wrap;
+}
+#log .system { color: var(--muted); font-style: italic; }

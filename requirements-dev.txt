@@ -1,0 +1,3 @@
+-r requirements.txt
+# tests of the web interface
+httpx

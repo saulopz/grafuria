@@ -15,7 +15,7 @@ VENV=".venv-ci"
 # --system-site-packages: Tkinter comes from the system Python.
 "$PYTHON" -m venv --system-site-packages "$VENV"
 . "$VENV/bin/activate"
-python -m pip install --quiet --disable-pip-version-check -r requirements.txt
+python -m pip install --quiet --disable-pip-version-check -r requirements-dev.txt
 python --version
 
 # In CI the interface tests must run, never be skipped.
