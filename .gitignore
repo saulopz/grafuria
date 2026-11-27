@@ -6,6 +6,8 @@
 
 # Ignore
 /*.cvs
+/*.csv
+/settings.json
 
 # Include the 'graph' subfolder and its files, but not its subdirectories
 !graphs/

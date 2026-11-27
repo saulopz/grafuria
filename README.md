@@ -19,7 +19,18 @@ It allows users to easily construct directed and undirected graphs, assign weigh
 
 ---
 
+> **Versions.** The code that accompanies the Nemertea paper (RITA) and the
+> INPI registration is preserved in the tag
+> [`v1.0`](https://github.com/saulopz/grafuria/tree/v1.0). The `main` branch
+> is under active restructuring.
+
 ## Getting Started
+
+### Requirements
+
+* Python 3.10 or newer, with Tkinter (on Debian/Ubuntu: `sudo apt install python3-tk`)
+* Python packages: `pip install -r requirements.txt` (`lupa` and `Pillow`)
+
 
 ### Launching from Command Line
 

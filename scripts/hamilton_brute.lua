@@ -1,72 +1,42 @@
---- Verifica se o caminho atual forma um ciclo hamiltoniano
----@param path table Caminho atual (lista de vértices)
----@return boolean Retorna true se o caminho for um ciclo hamiltoniano
-local function is_hamiltonian_cycle(path)
-    local n = app:get_vertex_size()
-    local visited = {}
-
-    -- Verifica se todos os vértices foram visitados
-    for _, vertex in ipairs(path) do
-        if visited[vertex:get_id()] then
-            return false -- Vértice já visitado
-        end
-        visited[vertex:get_id()] = true
-    end
-
-    -- Verifica se o último vértice está conectado ao primeiro
-    local last = path[#path]
-    local first = path[1]
-    for i = 1, last:get_edge_size() do
-        local edge = last:get_edge(i)
-        local neighbor = last:get_adjacent(edge)
-        if neighbor:get_id() == first:get_id() then
-            return #path == n
-        end
-    end
-
-    return false
+--- Verifica se dois vértices são adjacentes
+---@return boolean
+local function is_adjacent(a, b)
+    return a:is_connected(b)
 end
 
---- Gera todas as permutações dos vértices e verifica se há um ciclo hamiltoniano
+--- Busca em profundidade com retrocesso (backtracking).
+--- Só estende o caminho por vizinhos do último vértice, então todo
+--- par consecutivo do caminho é uma aresta do grafo. O primeiro
+--- vértice é fixo: um ciclo é o mesmo em qualquer rotação.
 ---@param path table Caminho atual (lista de vértices)
----@return table|nil Retorna o ciclo hamiltoniano encontrado ou nil se não houver
-local function find_hamiltonian_cycle(path)
-    local n = app:get_vertex_size()
+---@param in_path table Conjunto de ids já no caminho
+---@param n number Número de vértices do grafo
+---@return table|nil Ciclo hamiltoniano encontrado ou nil
+local function find_hamiltonian_cycle(path, in_path, n)
+    if app:is_stopped() then
+        return nil
+    end
 
-    -- Verifica se o caminho atual é um ciclo hamiltoniano
+    local last = path[#path]
     if #path == n then
-        if is_hamiltonian_cycle(path) then
+        -- Fecha o ciclo: o último precisa ser vizinho do primeiro
+        if is_adjacent(last, path[1]) then
             return path
         end
         return nil
     end
 
-    -- Itera sobre todos os vértices
-    for i = 1, n do
-        local vertex = app:get_vertex(i)
-        local already_in_path = false
-
-        -- Verifica se o vértice já está no caminho
-        for _, v in ipairs(path) do
-            if v:get_id() == vertex:get_id() then
-                already_in_path = true
-                break
+    for i = 1, last:get_edge_size() do
+        local edge = last:get_edge(i)
+        local neighbor = last:get_adjacent(edge)
+        if not in_path[neighbor:get_id()] then
+            table.insert(path, neighbor)
+            in_path[neighbor:get_id()] = true
+            if find_hamiltonian_cycle(path, in_path, n) then
+                return path
             end
-        end
-
-        if not already_in_path then
-            local new_path = {unpack(path)}
-            table.insert(new_path, vertex)
-
-            -- Verifica se o usuário interrompeu a execução
-            if app:is_stopped() then
-                return nil
-            end
-
-            local result = find_hamiltonian_cycle(new_path)
-            if result then
-                return result
-            end
+            in_path[neighbor:get_id()] = nil
+            table.remove(path)
         end
     end
 
@@ -86,7 +56,11 @@ function brute_force_hamiltonian()
     end
 
     -- Inicia a busca
-    local cycle = find_hamiltonian_cycle({})
+    local cycle = nil
+    if n > 0 then
+        local first = app:get_vertex(1)
+        cycle = find_hamiltonian_cycle({ first }, { [first:get_id()] = true }, n)
+    end
     if cycle then
         app:log("#Ciclo Hamiltoniano encontrado:")
         for _, vertex in ipairs(cycle) do
@@ -116,8 +90,10 @@ function brute_force_hamiltonian()
         local execution_time = end_time - start_time
         app:set_execution_time(execution_time)
         app:log("#Execution time: " .. execution_time .. " seconds")
+        app:set_solved(true)
     else
         app:log("#Nenhum ciclo Hamiltoniano encontrado.")
+        app:set_solved(false)
     end
 end
 

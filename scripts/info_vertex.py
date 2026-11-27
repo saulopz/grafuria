@@ -1,10 +1,5 @@
+State: "State"  # type: ignore  (injected by Grafuria)
 app: "AppProxy" # type: ignore
-class State:
-    NONE = 0
-    TESTING = 1
-    ACTIVE = 2
-    INVALID = 3
-
 def show_connections(vertex):
     edge_size = vertex.get_edge_size()
     for i in range(edge_size):

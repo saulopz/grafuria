@@ -271,7 +271,7 @@ class Vertex:
             )
         elif self.state == State.INVALID:
             self.canvas.itemconfig(
-                self.canvas.id,
+                self.canvas_id,
                 fill=self.app.COLOR_INVALID,
             )
 

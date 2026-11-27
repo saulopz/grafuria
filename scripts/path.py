@@ -1,11 +1,6 @@
+State: "State"  # type: ignore  (injected by Grafuria)
 app: "AppProxy"  # type: ignore
 
-
-class State:
-    NONE = 0
-    TESTING = 1
-    ACTIVE = 2
-    INVALID = 3
 
 
 path = []
@@ -59,7 +54,7 @@ if end_var > -1:
     end_vertex = end_var
 
 path_size = first_path(begin) + 1
-path_str = ", ".join(path)
+path_str = ", ".join(str(p) for p in path)
 
 app.log(f"#Path: {path_str}")
 app.log(f"#Vertex on path: {path_size} of {vertex_size}")

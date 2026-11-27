@@ -33,6 +33,7 @@ This software is open-source and free to use and modify under the BSD 3-Clause
 License.
 """
 
+import os
 import sys
 from app import App
 import tkinter as tk
@@ -60,6 +61,15 @@ def main():
             graph = arg.split("=", 1)[1]
         elif arg.startswith("script="):
             script = arg.split("=", 1)[1]
+
+    # Paths given by the user are relative to where they called the
+    # program. Resolve them first, then work from the project folder,
+    # so settings.json and dofile("scripts/...") always resolve.
+    if graph:
+        graph = os.path.abspath(graph)
+    if script:
+        script = os.path.abspath(script)
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
     root = tk.Tk()
     app: App = App(master=root, filename=graph, script_lua=script)

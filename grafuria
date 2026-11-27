@@ -1,2 +1,2 @@
 #!/bin/sh
-python3 main.py $1 $2
+exec python3 "$(dirname "$0")/main.py" "$@"

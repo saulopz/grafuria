@@ -866,12 +866,9 @@ class App(tk.Frame):
             app_proxy = AppProxy(self)
             exec_globals = {
                 "app": app_proxy,
-                "State": {
-                    "NONE": State.NONE,
-                    "TESTING": State.TESTING,
-                    "ACTIVE": State.ACTIVE,
-                    "INVALID": State.INVALID,
-                },
+                # Same State values used internally and by Lua scripts.
+                # Scripts must NOT redefine State.
+                "State": State,
             }
             with open(self.script, "r") as file:
                 python_script = file.read()
@@ -922,7 +919,7 @@ class App(tk.Frame):
         if not self.var_execution_time_log.get():
             return
         try:
-            file_path = "execution_history.cvs"
+            file_path = "execution_history.csv"
             graph = os.path.basename(self.filename)
             script = os.path.basename(self.script)
             # locale.setlocale(locale.LC_NUMERIC, "pt_BR.UTF-8")
@@ -969,9 +966,7 @@ class App(tk.Frame):
     # -------------------------
     def show_error_alert(self, message):
         """Show a 'message' dialog with some error"""
-        root = tk.Tk()
-        root.withdraw()  # Hide main window
-        messagebox.showerror("Script error", message)
+        messagebox.showerror("Script error", message, parent=self.master)
 
     # -------------------------
     # Step

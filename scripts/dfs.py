@@ -1,13 +1,8 @@
 import time
 import random
 
+State: "State"  # type: ignore  (injected by Grafuria)
 app: "AppProxy" # type: ignore
-
-class State:
-    NONE = 0
-    TESTING = 1
-    ACTIVE = 2
-    INVALID = 3
 
 # -------------------------
 # DFSNode Class
