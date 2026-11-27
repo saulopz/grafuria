@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Grafuria · Tutorial</title>
+  <!-- Images in the tutorial use paths relative to docs/, as on GitHub. -->
+  <base href="/docs/">
+  <link rel="stylesheet" href="/static/tutorial.css">
+</head>
+<body>
+  <nav>
+    <a href="/">&larr; Grafuria</a>
+    <span class="langs">
+      <a href="/tutorial?lang=pt" hreflang="pt">Português</a> ·
+      <a href="/tutorial?lang=en" hreflang="en">English</a>
+    </span>
+  </nav>
+  <article id="content"><p>Loading…</p></article>
+
+  <script src="/static/vendor/marked.umd.js"></script>
+  <script>
+    "use strict";
+    const asked = new URLSearchParams(location.search).get("lang");
+    const lang = asked === "pt" || asked === "en"
+      ? asked
+      : ((navigator.language || "en").toLowerCase().startsWith("pt") ? "pt" : "en");
+    document.documentElement.lang = lang;
+    fetch(`/docs/tutorial.${lang}.md`)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then((md) => {
+        // Our own documentation, not user input.
+        document.getElementById("content").innerHTML = marked.parse(md);
+        // Links to the other language's .md file open the rendered page.
+        for (const a of document.querySelectorAll('#content a[href^="tutorial."]')) {
+          const m = a.getAttribute("href").match(/^tutorial\.(pt|en)\.md$/);
+          if (m) a.href = `/tutorial?lang=${m[1]}`;
+        }
+        const title = document.querySelector("#content h1");
+        if (title) document.title = title.textContent;
+      })
+      .catch(() => {
+        document.getElementById("content").innerHTML =
+          "<p>Tutorial not found. It lives in the <code>docs/</code> folder of the project.</p>";
+      });
+  </script>
+</body>
+</html>

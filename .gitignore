@@ -17,6 +17,7 @@ graphs/*/
 !scripts/
 scripts/*/
 !scripts/nemertea/
+!scripts/tutorial/
 
 # Include the 'res' subfolder and all its files and subdirectories
 !res/
@@ -37,3 +38,6 @@ teste/
 # CI support files; local CI virtualenv
 !ci/
 /.venv*/
+
+# Documentation
+!docs/

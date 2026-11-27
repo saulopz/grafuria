@@ -183,8 +183,11 @@ class WebSession(ScriptHost):
         if path is None or scripting.script_language(path) is None:
             return [{"type": "error", "message": f"Script not found: {name}"}]
         self.script, self.script_name = path, name
-        params = scripting.load_script_parameters(path)
-        return [{"type": "script", "name": name, "params": params}]
+        return [self.script_message()]
+
+    def script_message(self) -> dict:
+        params = scripting.load_script_parameters(self.script)
+        return {"type": "script", "name": self.script_name, "params": params}
 
     def play(self) -> list:
         if self.running:
@@ -356,10 +359,12 @@ class WebSession(ScriptHost):
         return [{"type": "error", "message": f"Unknown command: {cmd}"}]
 
 
-def create_app(session: Optional[WebSession] = None, allowed_origins: Optional[set] = None) -> FastAPI:
+def create_app(session: Optional[WebSession] = None, allowed_origins: Optional[set] = None,
+               docs_dir: str = "docs") -> FastAPI:
     """
     Builds the web application. allowed_origins lists the page origins
     allowed to open the WebSocket (None allows any; only for tests).
+    docs_dir is the documentation folder (tutorial and its images).
     """
     session = session or WebSession()
     clients: set = set()
@@ -394,7 +399,13 @@ def create_app(session: Optional[WebSession] = None, allowed_origins: Optional[s
     async def index():
         return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
+    @app.get("/tutorial")
+    async def tutorial():
+        return FileResponse(os.path.join(STATIC_DIR, "tutorial.html"))
+
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+    if os.path.isdir(docs_dir):
+        app.mount("/docs", StaticFiles(directory=docs_dir), name="docs")
 
     @app.websocket("/ws")
     async def websocket(ws: WebSocket):
@@ -409,6 +420,8 @@ def create_app(session: Optional[WebSession] = None, allowed_origins: Optional[s
             await ws.send_json(session.files())
             if session.graph is not None:
                 await ws.send_json(session.graph_message())
+            if session.script:
+                await ws.send_json(session.script_message())
             await ws.send_json(session.status())
             while True:
                 command = await ws.receive_json()

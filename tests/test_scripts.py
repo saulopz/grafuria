@@ -8,6 +8,7 @@ and icosahedron have one.
 
 import os
 import sys
+import tempfile
 import time
 import unittest
 
@@ -15,6 +16,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from grafuria.core.headless import load_script_parameters, run_once  # noqa: E402
+from grafuria.core.scripting import describe_error, run_script  # noqa: E402
 from grafuria.core.state import State  # noqa: E402
 
 try:
@@ -131,6 +133,62 @@ class TestLuaScripts(unittest.TestCase):
         for script in ["bfs.lua", "dfs.lua", "path.lua"]:
             with self.subTest(script=script):
                 self.assertEqual(run("cube", "scripts/" + script)["error"], "")
+
+
+def walk_is_consistent(test, result) -> None:
+    """The walk marks a simple path: k active vertices, k-1 active edges."""
+    graph = result["graph"]
+    test.assertEqual(result["error"], "")
+    test.assertFalse([v for v in graph.vertex if v.state == State.TESTING])
+    active = [v for v in graph.vertex if v.state == State.ACTIVE]
+    edges = [e for e in graph.edge if e.state == State.ACTIVE]
+    test.assertEqual(len(edges), len(active) - 1)
+    test.assertTrue(all(v.get_active_edge_size() <= 2 for v in active))
+    test.assertEqual(result["solved"], len(active) == len(graph.vertex))
+    test.assertTrue(result["host"].logs[-1].startswith(f"#Visited {len(active)} of"))
+
+
+class TestTutorialScripts(unittest.TestCase):
+    def test_walk_py(self):
+        for graph in ["cube", "dodecahedron", "petersen", "chessboard"]:
+            for seed in range(10):
+                with self.subTest(graph=graph, seed=seed):
+                    walk_is_consistent(self, run(graph, "scripts/tutorial/walk.py", seed=seed))
+
+    @unittest.skipUnless(HAS_LUA, "lupa not installed")
+    def test_walk_lua(self):
+        for graph in ["cube", "dodecahedron", "petersen", "chessboard"]:
+            for seed in range(10):
+                with self.subTest(graph=graph, seed=seed):
+                    walk_is_consistent(self, run(graph, "scripts/tutorial/walk.lua", seed=seed))
+
+    @unittest.skipUnless(HAS_LUA, "lupa not installed")
+    def test_walk_from_a_fixed_vertex(self):
+        for script in ["scripts/tutorial/walk.lua", "scripts/tutorial/walk.py"]:
+            r = run("cube", script, start=3)
+            self.assertEqual(r["host"].logs[0], "#Starting at vertex 3")
+
+
+class TestErrorMessages(unittest.TestCase):
+    """Script errors must say where they happened (students need it)."""
+
+    def error_of(self, name: str, source: str) -> str:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, name)
+            with open(path, "w") as f:
+                f.write(source)
+            return run("cube", path)["error"]
+
+    def test_python_errors_have_file_and_line(self):
+        self.assertEqual(self.error_of("a.py", "x = 1\nprint(nope)\n"),
+                         "a.py, line 2: name 'nope' is not defined")
+        self.assertIn("a.py, line 2:", self.error_of("a.py", "x = 1\nif x\n  pass\n"))
+        self.assertIn("a.py, line 2:", self.error_of("a.py", "def f(v):\n  return v.nope()\nf(app.get_vertex(0))\n"))
+
+    @unittest.skipUnless(HAS_LUA, "lupa not installed")
+    def test_lua_errors_have_file_and_line(self):
+        self.assertIn("a.lua:2:", self.error_of("a.lua", "local n = nil\nprint(n.x)\n"))
+        self.assertIn("a.lua:3:", self.error_of("a.lua", "if true then\n  print('a'\nend\n"))
 
 
 if __name__ == "__main__":

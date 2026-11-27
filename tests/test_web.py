@@ -36,7 +36,7 @@ class TestWebServer(unittest.TestCase):
     def setUp(self):
         os.chdir(ROOT)  # Lua scripts use dofile("scripts/...")
         self.session = WebSession(os.path.join(ROOT, "graphs"), os.path.join(ROOT, "scripts"))
-        self.client = TestClient(create_app(self.session))
+        self.client = TestClient(create_app(self.session, docs_dir=os.path.join(ROOT, "docs")))
         self.client.__enter__()  # runs the lifespan (update flusher)
 
     def tearDown(self):
@@ -82,6 +82,29 @@ class TestWebServer(unittest.TestCase):
                 self.assertEqual(receive_until(ws, "error")[-1]["type"], "error")
                 ws.send_json({"cmd": "load_script", "name": name})
                 self.assertEqual(receive_until(ws, "error")[-1]["type"], "error")
+
+    def test_new_page_receives_current_graph_and_script(self):
+        # Regression: a second page did not learn which script was loaded.
+        with self.client.websocket_connect("/ws") as ws:
+            ws.receive_json()
+            ws.send_json({"cmd": "load_graph", "name": "cube.json"})
+            receive_until(ws, "graph")
+            ws.send_json({"cmd": "load_script", "name": "tutorial/walk.lua"})
+            receive_until(ws, "script")
+        with self.client.websocket_connect("/ws") as ws:
+            types = {m["type"]: m for m in receive_until(ws, "status")}
+        self.assertEqual(types["graph"]["name"], "cube.json")
+        self.assertEqual(types["script"]["name"], "tutorial/walk.lua")
+        self.assertEqual(types["script"]["params"], {"start": -1})
+
+    def test_tutorial_page_and_docs_are_served(self):
+        self.assertIn("marked", self.client.get("/tutorial").text)
+        for lang in ["pt", "en"]:
+            md = self.client.get(f"/docs/tutorial.{lang}.md")
+            self.assertEqual(md.status_code, 200)
+            for image in ["screen.png", "drawing.png", "walk.png"]:
+                self.assertIn(f"img/{image}", md.text)
+                self.assertEqual(self.client.get(f"/docs/img/{image}").status_code, 200)
 
     def test_play_without_graph_is_an_error(self):
         with self.client.websocket_connect("/ws") as ws:

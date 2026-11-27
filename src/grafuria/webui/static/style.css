@@ -96,3 +96,5 @@ button:disabled { opacity: .45; cursor: default; }
 #help li { margin-bottom: 3px; }
 
 .locked #cy { cursor: progress; }
+
+#tutorial-link { font-size: 14px; color: var(--ink); margin-top: 6px; }

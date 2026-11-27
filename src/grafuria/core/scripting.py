@@ -218,6 +218,27 @@ class EdgeProxy:
 # -------------------------
 # Execution
 # -------------------------
+def describe_error(error: BaseException, path: str) -> str:
+    """
+    A short error message pointing to the script line, e.g.
+    "walk.py, line 12: name 'x' is not defined". Lua errors already
+    carry their line in the message.
+    """
+    import traceback
+
+    script = os.path.abspath(path)
+    if isinstance(error, SyntaxError) and error.lineno:
+        return f"{os.path.basename(path)}, line {error.lineno}: {error.msg}"
+    line = None
+    for frame in traceback.extract_tb(error.__traceback__):
+        if os.path.abspath(frame.filename) == script:
+            line = frame.lineno  # keep the deepest frame inside the script
+    message = f"{type(error).__name__}: {error}" if not str(error) else str(error)
+    if line is None:
+        return message
+    return f"{os.path.basename(path)}, line {line}: {message}"
+
+
 def run_script(path: str, graph: Graph, host, seed: Optional[int] = None) -> None:
     """
     Runs the script at path over graph, talking to host. Exceptions
@@ -243,7 +264,12 @@ def run_script(path: str, graph: Graph, host, seed: Optional[int] = None) -> Non
         lua.globals().State = lua.table_from(STATE_VALUES)
         if seed is not None:
             lua.execute(f"math.randomseed({int(seed)})")
-        lua.execute(source)
+        # Lua's own load() names the chunk, so errors read "walk.lua:12: ..."
+        loaded = lua.globals().load(source, "@" + os.path.basename(path))
+        chunk, message = loaded if isinstance(loaded, tuple) else (loaded, None)
+        if chunk is None:
+            raise SyntaxError(message)  # message already has file and line
+        chunk()
     else:
         exec_globals = {
             "__name__": "__grafuria__",

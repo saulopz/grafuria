@@ -28,7 +28,7 @@ import time
 from typing import Optional
 
 from .graph import Graph
-from .scripting import load_script_parameters, run_script
+from .scripting import describe_error, load_script_parameters, run_script
 
 
 class HeadlessHost:
@@ -91,7 +91,7 @@ def run_once(graph_file: str, script: str, variables: dict, seed: int,
     try:
         run_script(script, graph, host, seed=seed)
     except Exception as e:
-        error = str(e).splitlines()[0]
+        error = describe_error(e, script).splitlines()[0]
     wall = time.perf_counter() - start
     return {
         "seed": seed,

@@ -78,7 +78,7 @@ class ScriptHost:
             scripting.run_script(script, graph, host=self)
         except Exception as e:
             error = e
-            self.show_log(f"[Script error] {e}", system=True)
+            self.show_log(f"[Script error] {scripting.describe_error(e, script)}", system=True)
         self.on_finished(script, graph_file, error)
 
     # -------------------------

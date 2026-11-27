@@ -24,6 +24,8 @@ It allows users to easily construct directed and undirected graphs, assign weigh
 > [`v1.0`](https://github.com/saulopz/grafuria/tree/v1.0). The `main` branch
 > is under active restructuring.
 
+**Tutorial:** [Português](docs/tutorial.pt.md) · [English](docs/tutorial.en.md)
+
 ## Getting Started
 
 ### Requirements
@@ -130,7 +132,9 @@ To start fresh: `File > New...`
 
 Lua is the main scripting language used in Grafuria. Each algorithm script interacts with the graph via a globally available `app` instance.
 
-> You may organize your scripts in subfolders under `lua/` for better modularity.
+> Scripts live in `scripts/` and may be organized in subfolders.
+
+> **New here?** Follow the step-by-step tutorial: [Português](docs/tutorial.pt.md) · [English](docs/tutorial.en.md). It is also available inside the web interface.
 
 ### Lua vs Python API Comparison
 
@@ -143,7 +147,8 @@ Lua is the main scripting language used in Grafuria. Each algorithm script inter
 | Access Vertex     | `app:get_vertex(i)`        | `app.get_vertex(i)`        |
 | Vertex by ID      | `app:get_vertex_by_id(id)` | `app.get_vertex_by_id(id)` |
 | Wait Step         | `app:step()`               | `app.step()`               |
-| Set/Get Variables | `app:set_var("k", v)`      | `app.set_var("k", v)`      |
+| Script Parameter  | `app:get_var("k")`         | `app.get_var("k")`         |
+| Execution Time    | `app:set_execution_time(t)` | `app.set_execution_time(t)` |
 
 Note: Lua arrays start at index 1, while Python uses index 0.
 
@@ -160,7 +165,7 @@ Scripts may use a companion JSON file to define runtime parameters:
 }
 ```
 
-When loaded, the UI creates interactive fields for these variables. Ranges (`*_min` / `*_max`) create sliders.
+When loaded, the desktop interface creates fields for these variables; ranges (`*_min` / `*_max`) create sliders. The web interface currently only displays them.
 
 The JSON file must have the same name as the script.
 
@@ -183,8 +188,9 @@ Available Methods:
 * `get_vertex_size()` — Returns the total number of vertices in the graph.
 * `get_vertex(index)` — Returns the vertex at a given index.
 * `get_vertex_by_id(id)` — Retrieves a vertex by its unique ID.
-* `get_var(name)` — Retrieves a script variable defined in the configuration JSON.
-* `set_var(name, value)` — Assigns a value to a script variable.
+* `get_var(name)` — Retrieves a script parameter defined in the configuration JSON.
+* `set_execution_time(seconds)` — Reports the execution time (shown in the status and the history).
+* `area_add(x, y)` / `area_close()` — Adds points to a polygon and draws it (desktop interface only, for now).
 * `step()` — Causes the application to pause based on the speed setting, useful for animated execution steps.
 
 ### Vertex Class
@@ -200,6 +206,7 @@ Available Methods:
 
 * `get_id()` — Returns the vertex's unique ID.
 * `get_name()` — Returns the name of the vertex.
+* `get_x()` / `get_y()` — Position of the vertex.
 * `get_state()` — Gets the current state of the vertex.
 * `set_state(state)` — Sets the state of the vertex (e.g., `State.ACTIVE`).
 * `get_edge_size()` — Returns the number of edges connected to this vertex.
@@ -207,6 +214,8 @@ Available Methods:
 * `get_active_edge_size()` — Returns the number of edges currently in the `ACTIVE` state.
 * `is_connected(vertex)` — Returns true if the current vertex is connected to the given vertex.
 * `get_adjacent(edge)` — Returns the vertex connected to this one via the given edge.
+* `get_edge_to(vertex)` — Returns the edge to the given vertex, or nothing.
+* `set_var(name, value)` / `get_var(name)` — Free notes attached to the vertex by the script (cleared on every run).
 
 ### Edge Class
 
@@ -221,6 +230,7 @@ Available Methods:
 * `get_weight()` / `set_weight(weight)` — Gets or sets the edge's weight (a floating-point value).
 * `get_a()` — Returns one endpoint vertex of the edge.
 * `get_b()` — Returns the other endpoint vertex of the edge.
+* `get_adjacent(vertex)` — Returns the endpoint that is not the given vertex.
 
 ---
 
@@ -229,6 +239,7 @@ Available Methods:
 * `State.NONE`: Default state (not active)
 * `State.TESTING`: Under evaluation
 * `State.ACTIVE`: Marked as active during execution
+* `State.INVALID`: Discarded
 
 ---
 
@@ -236,8 +247,8 @@ Available Methods:
 
 Sample content is available in the following folders:
 
-* `graphs/` — includes examples like `dodecaedron.json`
-* `scripts/` — includes BFS and DFS implementations
+* `graphs/` — includes examples like `dodecahedron.json`
+* `scripts/` — includes BFS and DFS implementations, the Nemertea algorithm, and the tutorial walk (`scripts/tutorial/`)
 
 These scripts randomly choose two vertices and find paths using different strategies.
 

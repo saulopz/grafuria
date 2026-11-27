@@ -1,0 +1,29 @@
+:root { --ink: #1d1d1f; --muted: #6b6b70; --line: #d8d4cc; --panel: #f3f1ec; }
+* { box-sizing: border-box; }
+body {
+  margin: 0; color: var(--ink); background: #fff;
+  font: 17px/1.65 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+nav {
+  position: sticky; top: 0; display: flex; justify-content: space-between;
+  padding: 10px 20px; background: var(--panel); border-bottom: 1px solid var(--line);
+  font-size: 15px;
+}
+nav a { color: var(--ink); }
+article { max-width: 760px; margin: 0 auto; padding: 24px 20px 80px; }
+h1 { font-size: 30px; line-height: 1.2; }
+h2 { font-size: 23px; margin-top: 2.2em; padding-top: .4em; border-top: 1px solid var(--line); }
+h3 { font-size: 19px; margin-top: 1.6em; }
+/* Short paragraphs and generous spacing help reading. */
+p, li { max-width: 68ch; }
+li { margin-bottom: .35em; }
+img { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; }
+code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--panel); padding: 1px 4px; border-radius: 3px; }
+pre { background: var(--panel); padding: 12px 14px; border-radius: 6px; overflow-x: auto; line-height: 1.45; }
+pre code { background: none; padding: 0; font-size: 14px; }
+table { border-collapse: collapse; font-size: 15px; }
+th, td { border: 1px solid var(--line); padding: 5px 9px; text-align: left; vertical-align: top; }
+th { background: var(--panel); }
+blockquote { margin: 1em 0; padding: 4px 14px; border-left: 4px solid var(--ink); background: var(--panel); }
+/* Sections already have a top border; rules from the Markdown would double it. */
+article hr { display: none; }
