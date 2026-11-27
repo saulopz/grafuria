@@ -20,6 +20,7 @@ try:
     import tkinter as tk
     _root = tk.Tk()
     _root.destroy()
+    del _root  # keep no Tk object alive at module level
     HAS_DISPLAY = True
 except Exception as e:
     HAS_DISPLAY = False
@@ -76,7 +77,13 @@ class TestInterface(unittest.TestCase):
     def tearDown(self):
         self.root.destroy()
         self.tmp.cleanup()
-        gc.collect()  # finalize this test's Tk objects in the main thread
+        # Drop every reference to Tk objects and collect them now, in the
+        # main thread. Otherwise the test case keeps them alive and they are
+        # collected later in another thread (e.g. the web server tests),
+        # where Tk complains ("main thread is not in main loop").
+        for name in ("app", "root", "counter", "theme"):
+            self.__dict__.pop(name, None)
+        gc.collect()
 
     def click(self, x=0, y=0):
         return types.SimpleNamespace(x=x, y=y)
