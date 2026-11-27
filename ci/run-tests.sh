@@ -4,7 +4,9 @@
 #   ci/run-tests.sh
 #
 # Needs: python3 with venv and Tkinter (Debian/Ubuntu: python3-venv
-# python3-tk) and, without a display, xvfb (xvfb-run).
+# python3-tk), without a display xvfb (xvfb-run), and Go (go.mod says
+# the minimum version). The race detector is used when a C compiler
+# is available.
 # Set PYTHON to use another interpreter, e.g. PYTHON=python3.12.
 set -eu
 
@@ -25,4 +27,19 @@ if [ -n "${DISPLAY:-}" ] || ! command -v xvfb-run >/dev/null 2>&1; then
     python -m unittest discover -s tests -v
 else
     xvfb-run -a python -m unittest discover -s tests -v
+fi
+
+# Go: the port of Grafuria (see go.mod).
+if [ -n "${GRAFURIA_REQUIRE_GO:-}" ] && ! command -v go >/dev/null 2>&1; then
+    echo "Go is required but not installed" >&2
+    exit 1
+fi
+if command -v go >/dev/null 2>&1; then
+    go version
+    go vet ./...
+    if command -v gcc >/dev/null 2>&1; then
+        go test -race -count=1 ./...
+    else
+        go test -count=1 ./...
+    fi
 fi

@@ -17,5 +17,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends python3-venv python3-tk xvfb xauth
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
       - name: Run tests
+        env:
+          GRAFURIA_REQUIRE_GO: "1"
         run: sh ci/run-tests.sh

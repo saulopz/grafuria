@@ -16,7 +16,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            git ca-certificates python3 python3-venv python3-tk xvfb xauth
+            git ca-certificates python3 python3-venv python3-tk xvfb xauth golang-go gcc
 
       # Plain git instead of actions/checkout: the Debian image has no
       # Node.js, which JavaScript actions need.

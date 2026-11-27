@@ -39,3 +39,7 @@ teste/
 
 # Documentation
 !docs/
+
+# Go code
+!internal/
+!cmd/
