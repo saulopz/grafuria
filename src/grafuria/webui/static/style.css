@@ -74,3 +74,25 @@ button:disabled { opacity: .45; cursor: default; }
   white-space: pre-wrap;
 }
 #log .system { color: var(--muted); font-style: italic; }
+
+.row { display: flex; gap: 6px; align-items: center; }
+.row input[type=text] {
+  flex: 1; min-width: 0; font: inherit; font-size: 13px; padding: 5px 6px;
+  border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink);
+}
+.row .check { margin-left: auto; }
+
+#selection { font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+#selection label { display: flex; flex-direction: column; gap: 3px; color: var(--muted); }
+#selection input {
+  font: inherit; padding: 5px 6px; border: 1px solid var(--line);
+  border-radius: 4px; background: #fff; color: var(--ink);
+}
+.hint { margin: 0; color: var(--muted); font-size: 13px; }
+
+#help { font-size: 12px; color: var(--muted); margin-top: 4px; }
+#help summary { cursor: pointer; }
+#help ul { padding-left: 16px; margin: 6px 0 0; }
+#help li { margin-bottom: 3px; }
+
+.locked #cy { cursor: progress; }

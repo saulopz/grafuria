@@ -14,6 +14,15 @@ Protocol (JSON over one WebSocket, /ws)
                      {"cmd": "load_script", "name": "nemertea/nemertea.lua"}
                      {"cmd": "play" | "pause" | "stop" | "clear"}
                      {"cmd": "speed", "value": 1..10}
+                     editing (refused while a script runs):
+                     {"cmd": "new_graph", "directed": bool}
+                     {"cmd": "add_vertex", "x", "y"}   {"cmd": "add_edge", "a", "b"}
+                     {"cmd": "move_vertex", "id", "x", "y"}
+                     {"cmd": "rename_vertex", "id", "name"}
+                     {"cmd": "set_weight", "id", "weight"}
+                     {"cmd": "delete_vertex" | "delete_edge", "id"}
+                     {"cmd": "set_directed", "directed": bool}
+                     {"cmd": "save_graph", "name": "my_graph.json"}
   server -> browser  {"type": "files", "graphs": [...], "scripts": [...]}
                      {"type": "graph", "name", "graph": {...}}
                      {"type": "script", "name", "params": {...}}
@@ -22,6 +31,10 @@ Protocol (JSON over one WebSocket, /ws)
                      {"type": "area", "points": [[x, y], ...]}
                      {"type": "status", "running", "paused", "speed"}
                      {"type": "finished", "solved", "time"}
+                     {"type": "vertex_added", "vertex"}  {"type": "edge_added", "edge"}
+                     {"type": "vertex_moved" | "vertex_renamed" | "edge_weight", ...}
+                     {"type": "vertex_removed", "id", "edges"}  {"type": "edge_removed", "id"}
+                     {"type": "saved", "name"}
                      {"type": "error", "message"}
 """
 
@@ -191,8 +204,138 @@ class WebSession(ScriptHost):
             self.graph.reset_states()
         return [self.status()]
 
+    # --- editing (event loop) ----------------------------------------------
+    @staticmethod
+    def _vertex_json(v: Vertex) -> dict:
+        return v.to_dict()
+
+    @staticmethod
+    def _edge_json(e: Edge) -> dict:
+        return e.to_dict()
+
+    def _editable(self) -> Optional[list]:
+        """Returns an error message list if the graph cannot be edited now."""
+        if self.running:
+            return [{"type": "error", "message": "Stop the script before editing the graph."}]
+        if self.graph is None:
+            return [{"type": "error", "message": "No graph: choose one or create a new graph."}]
+        return None
+
+    def _vertex(self, command: dict) -> Optional[Vertex]:
+        try:
+            return self.graph.get_vertex_by_id(int(command.get("id")))
+        except (TypeError, ValueError):
+            return None
+
+    def _edge(self, command: dict) -> Optional[Edge]:
+        try:
+            return self.graph.get_edge_by_id(int(command.get("id")))
+        except (TypeError, ValueError):
+            return None
+
+    def new_graph(self, bidirectional: bool = True) -> list:
+        self.stop()
+        self.join(2)
+        graph = Graph(bidirectional=bidirectional)
+        graph.listener = self._on_model_change
+        self.graph, self.graph_name = graph, ""
+        self.take_updates()
+        return [self.graph_message(), self.status()]
+
+    def add_vertex(self, command: dict) -> list:
+        x, y = float(command.get("x", 0)), float(command.get("y", 0))
+        vertex = self.graph.add_vertex(str(command.get("name", "")), x, y)
+        return [{"type": "vertex_added", "vertex": self._vertex_json(vertex)}]
+
+    def add_edge(self, command: dict) -> list:
+        try:
+            a = self.graph.get_vertex_by_id(int(command.get("a")))
+            b = self.graph.get_vertex_by_id(int(command.get("b")))
+            weight = float(command.get("weight", 1))
+        except (TypeError, ValueError):
+            a = b = None
+        if a is None or b is None:
+            return [{"type": "error", "message": "Edge needs two existing vertices."}]
+        try:
+            edge = self.graph.add_edge(a, b, weight)
+        except ValueError as e:
+            return [{"type": "error", "message": str(e)}]
+        return [{"type": "edge_added", "edge": self._edge_json(edge)}]
+
+    def move_vertex(self, command: dict) -> list:
+        vertex = self._vertex(command)
+        if vertex is None:
+            return [{"type": "error", "message": "Vertex not found."}]
+        vertex.x, vertex.y = float(command.get("x", vertex.x)), float(command.get("y", vertex.y))
+        return [{"type": "vertex_moved", "id": vertex.id, "x": vertex.x, "y": vertex.y}]
+
+    def rename_vertex(self, command: dict) -> list:
+        vertex = self._vertex(command)
+        if vertex is None:
+            return [{"type": "error", "message": "Vertex not found."}]
+        vertex.name = str(command.get("name", ""))
+        return [{"type": "vertex_renamed", "id": vertex.id, "name": vertex.name}]
+
+    def set_weight(self, command: dict) -> list:
+        edge = self._edge(command)
+        if edge is None:
+            return [{"type": "error", "message": "Edge not found."}]
+        try:
+            edge.weight = float(command.get("weight"))
+        except (TypeError, ValueError):
+            return [{"type": "error", "message": "The weight must be a number."}]
+        return [{"type": "edge_weight", "id": edge.id, "weight": edge.weight}]
+
+    def delete_vertex(self, command: dict) -> list:
+        vertex = self._vertex(command)
+        if vertex is None:
+            return [{"type": "error", "message": "Vertex not found."}]
+        edges = [e.id for e in vertex.edge]
+        self.graph.remove_vertex(vertex)
+        return [{"type": "vertex_removed", "id": vertex.id, "edges": edges}]
+
+    def delete_edge(self, command: dict) -> list:
+        edge = self._edge(command)
+        if edge is None:
+            return [{"type": "error", "message": "Edge not found."}]
+        self.graph.remove_edge(edge)
+        return [{"type": "edge_removed", "id": edge.id}]
+
+    def set_directed(self, command: dict) -> list:
+        self.graph.bidirectional = not bool(command.get("directed"))
+        return [self.graph_message()]
+
+    def save_graph(self, command: dict) -> list:
+        """Saves into graphs/ under a plain file name (no folders)."""
+        name = str(command.get("name", "")).strip()
+        if not name.endswith(".json"):
+            name += ".json"
+        stem = name[:-5]
+        if not stem or os.path.basename(name) != name or name.startswith("."):
+            return [{"type": "error", "message": "Use a plain file name, e.g. my_graph.json."}]
+        path = os.path.join(self.graphs_dir, name)
+        try:
+            self.graph.save(path)
+        except OSError as e:
+            return [{"type": "error", "message": f"Could not save: {e}"}]
+        self.graph_name = name
+        return [self.files(), {"type": "saved", "name": name}]
+
+    # --- dispatch ------------------------------------------------------------
+    EDIT_COMMANDS = {
+        "add_vertex", "add_edge", "move_vertex", "rename_vertex", "set_weight",
+        "delete_vertex", "delete_edge", "set_directed", "save_graph",
+    }
+
     def handle(self, command: dict) -> list:
         cmd = command.get("cmd")
+        if cmd in self.EDIT_COMMANDS:
+            refused = self._editable()
+            if refused:
+                return refused
+            return getattr(self, cmd)(command)
+        if cmd == "new_graph":
+            return self.new_graph(not bool(command.get("directed")))
         if cmd == "load_graph":
             return self.load_graph(str(command.get("name", "")))
         if cmd == "load_script":

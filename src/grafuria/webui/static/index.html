@@ -16,32 +16,56 @@
     <aside id="panel">
       <h1>Grafuria</h1>
 
-      <label class="field">Graph
+      <h2>Graph</h2>
+      <label class="field">Open
         <select id="graph-select"><option value="">choose…</option></select>
       </label>
+      <div class="row">
+        <input id="save-name" type="text" placeholder="name.json" spellcheck="false" aria-label="File name">
+        <button id="save">Save</button>
+      </div>
+      <div class="row">
+        <button id="new-graph">New graph</button>
+        <label class="check"><input id="directed" type="checkbox"> Directed</label>
+      </div>
+
+      <h2>Run</h2>
       <label class="field">Script
         <select id="script-select"><option value="">choose…</option></select>
       </label>
-
       <div class="buttons">
         <button id="play" title="Play / resume">&#9654; Play</button>
         <button id="pause" title="Pause">&#10074;&#10074; Pause</button>
         <button id="stop" title="Stop">&#9632; Stop</button>
         <button id="clear" title="Clear states">&#8635; Clear</button>
       </div>
-
       <label class="field">Speed <span id="speed-value">10</span>
         <input id="speed" type="range" min="1" max="10" value="10">
       </label>
+      <div id="status" role="status">Choose a graph and a script.</div>
+
+      <h2>Selection</h2>
+      <div id="selection"><p class="hint">Nothing selected.</p></div>
+
+      <h2>Parameters</h2>
+      <dl id="params"><dt>—</dt></dl>
+
+      <h2>View</h2>
       <label class="check"><input id="show-weight" type="checkbox"> Show weight</label>
       <label class="field">Log symbols
         <input id="log-symbols" type="text" value="#$" spellcheck="false">
       </label>
 
-      <div id="status" role="status">Choose a graph and a script.</div>
-
-      <h2>Parameters</h2>
-      <dl id="params"><dt>—</dt></dl>
+      <details id="help">
+        <summary>Mouse and keys</summary>
+        <ul>
+          <li><b>Double click</b> on empty space: new vertex</li>
+          <li><b>Click</b> a vertex, then <b>Shift+click</b> another: connect</li>
+          <li><b>Drag</b> a vertex: move</li>
+          <li><b>Delete</b>: remove the selected vertex or edge</li>
+          <li><b>Wheel</b>: zoom · drag the background: pan</li>
+        </ul>
+      </details>
     </aside>
 
     <section id="log" aria-label="Log"></section>

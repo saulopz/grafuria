@@ -83,9 +83,14 @@ be chosen in the address, which is handy for classes:
 > server listens on 127.0.0.1 and only accepts its own page; do not
 > expose it to a network.
 
-The prototype loads graphs and runs scripts with live animation.
-Editing (create, connect, drag, delete) is still done in the desktop
-interface below.
+Graphs can be drawn and edited in the browser: double click on empty
+space creates a vertex; click a vertex and Shift+click another to
+connect them; drag to move; Delete removes the selection; names and
+weights are edited in the side panel. Saved graphs go to `graphs/`.
+Editing is locked while a script runs.
+
+Still missing in the browser: editing script parameters and drawing
+script areas.
 
 ### Using the Interface
 
