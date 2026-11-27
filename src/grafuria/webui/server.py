@@ -447,18 +447,42 @@ def find_free_port(start: int = 8765) -> int:
     raise RuntimeError("No free port found")
 
 
+def parse_options(args: list) -> dict:
+    """--graphs=DIR --scripts=DIR --port=N --no-browser"""
+    options = {"graphs": "graphs", "scripts": "scripts", "port": None, "browser": True}
+    for arg in args:
+        if arg == "--no-browser":
+            options["browser"] = False
+        elif arg.startswith("--graphs="):
+            options["graphs"] = arg.split("=", 1)[1]
+        elif arg.startswith("--scripts="):
+            options["scripts"] = arg.split("=", 1)[1]
+        elif arg.startswith("--port="):
+            options["port"] = int(arg.split("=", 1)[1])
+        else:
+            raise SystemExit(f"Unknown option: {arg}")
+    return options
+
+
 def main(args: list) -> int:
-    """Starts the server on 127.0.0.1 and opens the browser."""
+    """
+    Starts the server on 127.0.0.1 and opens the browser.
+
+    The first line printed is "Grafuria web: http://127.0.0.1:PORT/";
+    tools (and the conformance tests) read the address from it.
+    """
     import webbrowser
 
     import uvicorn
 
-    port = find_free_port()
+    options = parse_options(args)
+    port = options["port"] or find_free_port()
     url = f"http://127.0.0.1:{port}/"
     origins = {f"http://127.0.0.1:{port}", f"http://localhost:{port}"}
-    app = create_app(allowed_origins=origins)
-    if "--no-browser" not in args:
+    session = WebSession(options["graphs"], options["scripts"])
+    app = create_app(session, allowed_origins=origins)
+    if options["browser"]:
         threading.Timer(1.0, webbrowser.open, args=(url,)).start()
-    print(f"Grafuria web: {url}  (Ctrl+C to quit)")
+    print(f"Grafuria web: {url}  (Ctrl+C to quit)", flush=True)
     uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
     return 0

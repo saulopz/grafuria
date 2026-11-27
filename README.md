@@ -309,6 +309,19 @@ $ python3 -m unittest discover -s tests
 
 Interface tests need a display; on a server use `xvfb-run -a` before the command.
 
+`tests/conformance/` checks the web server only through HTTP and the
+WebSocket protocol, starting it as an external program. It runs against
+the Python server by default; any other implementation can be checked
+with:
+
+```sh
+$ GRAFURIA_SERVER="path/to/server --web" python3 -m unittest tests/conformance/test_protocol.py
+```
+
+The server must accept `--no-browser --graphs=DIR --scripts=DIR` and
+print its address (`http://127.0.0.1:PORT/`). The tests use temporary
+copies of `graphs/` and `scripts/`.
+
 `ci/run-tests.sh` runs the suite exactly as the continuous integration
 does, on every push to `main` in GitHub Actions (`.github/workflows/`).
 A Codeberg workflow (`.forgejo/workflows/`) is included and runs if
