@@ -131,8 +131,8 @@ function first_path(root)
             if edge:get_state() ~= State.ACTIVE then
                 local adjacent = p:get_adjacent(edge)
                 if adjacent:get_state() ~= State.ACTIVE then
-                    edge.set_state(State.ACTIVE)
-                    adjacent.set_state(State.ACTIVE)
+                    edge:set_state(State.ACTIVE)
+                    adjacent:set_state(State.ACTIVE)
                     p = adjacent
                     found = true
                     size = size + 1

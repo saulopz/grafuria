@@ -40,8 +40,8 @@ DFS.__index = DFS
 ---@param destination_pos integer The end vertex point
 function DFS.new(origin_pos, destination_pos)
     local self = setmetatable({}, DFS)
-    self.origin_id = app:get_vertex(origin_pos).get_id()
-    self.destination_id = app:get_vertex(destination_pos).get_id()
+    self.origin_id = app:get_vertex(origin_pos):get_id()
+    self.destination_id = app:get_vertex(destination_pos):get_id()
     self.found = false -- Flag to know if the destination was found
     self.origin = DFSNode.new(app:get_vertex(origin_pos), nil)
     self.path = ""
