@@ -8,9 +8,11 @@ from tkinter.filedialog import asksaveasfile, askopenfilename
 from PIL import Image, ImageTk
 from vertex import Vertex, Edge
 import json
+import queue
+import sys
+import threading
 import time
 import webbrowser
-from threading import Thread
 from state import State, ScriptType
 from about import About
 from lupa import LuaRuntime
@@ -27,6 +29,7 @@ class App(tk.Frame):
     VERTEX = 0
     EDGE = 1
     SPEED_MAX = 10
+    UI_PUMP_MS = 16  # ~60 redraws per second while a script runs
 
     COLOR_BG = "white"
     COLOR_BG_SOLVED = "#f5f5dc"  # "#ffffee"
@@ -87,6 +90,14 @@ class App(tk.Frame):
         self.stopped = True
         self.paused = False
         self.filename: str = ""
+        # Thread-safe bridge between the script thread and Tkinter.
+        # Tkinter is not thread-safe: only the main thread may touch
+        # widgets. The script thread changes the model and either
+        # enqueues UI calls or marks elements as dirty for redrawing.
+        self._ui_queue: queue.SimpleQueue = queue.SimpleQueue()
+        self._dirty: set = set()
+        self._dirty_lock = threading.Lock()
+        self._script_vars: dict = {}
         if filename != "":
             self.load_graph_file(filename)
         if self.script != "":
@@ -95,6 +106,58 @@ class App(tk.Frame):
             )
             name = os.path.splitext(os.path.basename(self.script))[0]
             self.script_label.config(text=name)
+        self.after(App.UI_PUMP_MS, self._pump_ui)
+
+    # -------------------------
+    # UI Thread Bridge
+    # -------------------------
+    @staticmethod
+    def in_ui_thread() -> bool:
+        """Returns True if called from the Tkinter (main) thread."""
+        return threading.current_thread() is threading.main_thread()
+
+    def run_in_ui(self, fn, *args) -> None:
+        """
+        Runs fn(*args) in the UI thread. Called from the UI thread it
+        runs immediately; from any other thread it is queued and runs
+        on the next pump, preserving call order.
+        """
+        if self.in_ui_thread():
+            fn(*args)
+        else:
+            self._ui_queue.put((fn, args))
+
+    def mark_dirty(self, element) -> None:
+        """
+        Asks for an element (Vertex or Edge) to be redrawn. From the
+        script thread, repeated changes to the same element between two
+        pumps are coalesced into a single redraw.
+        """
+        if self.in_ui_thread():
+            element.draw()
+        else:
+            with self._dirty_lock:
+                self._dirty.add(element)
+
+    def _pump_ui(self) -> None:
+        """Executes queued UI calls and redraws dirty elements."""
+        while True:
+            try:
+                fn, args = self._ui_queue.get_nowait()
+            except queue.Empty:
+                break
+            try:
+                fn(*args)
+            except Exception as e:  # never let the pump die
+                print(f"[grafuria] UI callback error: {e}", file=sys.stderr)
+        with self._dirty_lock:
+            dirty, self._dirty = self._dirty, set()
+        for element in dirty:
+            try:
+                element.draw()
+            except Exception as e:
+                print(f"[grafuria] redraw error: {e}", file=sys.stderr)
+        self.after(App.UI_PUMP_MS, self._pump_ui)
 
     # -------------------------
     # Get Vertex Size
@@ -180,11 +243,14 @@ class App(tk.Frame):
         """
         Close the area polygon and create it.
         """
-        area = self.area
+        area, self.area = self.area, []
+        self.run_in_ui(self._draw_area, area)
+
+    def _draw_area(self, area) -> None:
+        """Draws a closed area polygon (UI thread only)."""
         self.canvas.create_polygon(
             *area, fill="lemon chiffon", outline="black", tags="area"
         )
-        self.area = []
 
     # -------------------------
     # Draw
@@ -360,27 +426,27 @@ class App(tk.Frame):
         show_weight_frame = ttk.Frame(self.config_frame)
         show_weight_frame.pack(fill="x", padx=10, pady=0)
         tk.Label(show_weight_frame, text="Show Weight:").pack(side="left", pady=0)
-        self.show_weight = tk.Checkbutton(
+        self.check_show_weight = tk.Checkbutton(
             show_weight_frame,
             variable=self.var_show_weight,
             onvalue=True,
             offvalue=False,
             command=self.on_show_weight_change,
         )
-        self.show_weight.pack(side="right")
+        self.check_show_weight.pack(side="right")
 
         # Control for "Animation"
         animation_frame = ttk.Frame(self.config_frame)
         animation_frame.pack(fill="x", padx=10, pady=0)
         tk.Label(animation_frame, text="Animation:").pack(side="left", pady=0)
-        self.animation = tk.Checkbutton(
+        self.check_animation = tk.Checkbutton(
             animation_frame,
             variable=self.var_animation,
             onvalue=True,
             offvalue=False,
             command=self.on_animation_change,
         )
-        self.animation.pack(side="right")
+        self.check_animation.pack(side="right")
 
         # Control for "Execution Time Log"
         execution_time_log_frame = ttk.Frame(self.config_frame)
@@ -388,14 +454,14 @@ class App(tk.Frame):
         tk.Label(execution_time_log_frame, text="Exec time log:").pack(
             side="left", pady=0
         )
-        self.execution_time_log = tk.Checkbutton(
+        self.check_execution_time_log = tk.Checkbutton(
             execution_time_log_frame,
             variable=self.var_execution_time_log,
             onvalue=True,
             offvalue=False,
             command=self.on_execution_time_log_change,
         )
-        self.execution_time_log.pack(side="right")
+        self.check_execution_time_log.pack(side="right")
 
         # Control for "Bidirectional"
         bidirectional_frame = ttk.Frame(self.config_frame)
@@ -803,6 +869,9 @@ class App(tk.Frame):
         if self.selected_edge is not None:
             self.selected_edge.unselect()
         self.stopped = False
+        # Snapshot the script parameters here, in the UI thread: the
+        # script reads plain values and never touches Tk variables.
+        self._script_vars = self._snapshot_script_vars()
 
         # For now python too ------------------------
         def _run_script():
@@ -821,7 +890,7 @@ class App(tk.Frame):
 
         # --------------------------------------
 
-        a = Thread(target=_run_script)
+        a = threading.Thread(target=_run_script)
 
         # a = Thread(target=self.lua_execute)
         a.daemon = True
@@ -849,12 +918,7 @@ class App(tk.Frame):
             self.save_execution_history()
         except Exception as e:
             self.log(str(e), True)
-        if self.solved:
-            self.canvas.configure(bg=App.COLOR_BG_SOLVED)
-        else:
-            self.canvas.configure(bg=App.COLOR_BG_FAILED)
-        if not self.animation:
-            self.draw()
+        self.run_in_ui(self._on_script_finished)
 
     # -------------------------
     # Python Execute
@@ -876,12 +940,17 @@ class App(tk.Frame):
             self.save_execution_history()
         except Exception as e:
             self.log(f"[Python script error] {e}", True)
+        self.run_in_ui(self._on_script_finished)
 
+    # -------------------------
+    # On Script Finished
+    # -------------------------
+    def _on_script_finished(self) -> None:
+        """Updates the canvas after a script ends (UI thread only)."""
         if self.solved:
             self.canvas.configure(bg=App.COLOR_BG_SOLVED)
         else:
             self.canvas.configure(bg=App.COLOR_BG_FAILED)
-
         if not self.animation:
             self.draw()
 
@@ -907,16 +976,24 @@ class App(tk.Frame):
     # Get Var
     # -------------------------
     def get_var(self, var_name):
-        """Returns a configuration variable to lua script."""
-        if self.script_properties:
-            return self.script_properties.get_attr(var_name)
-        return None
+        """
+        Returns a script parameter. Values are a snapshot taken when
+        the execution started (see event_play).
+        """
+        return self._script_vars.get(var_name)
+
+    def _snapshot_script_vars(self) -> dict:
+        """Copies script parameters to a plain dict (UI thread only)."""
+        if not self.script_properties:
+            return {}
+        props = self.script_properties
+        return {name: props.get_attr(name) for name in props.attr}
 
     # -------------------------
     # Save Execution History
     # -------------------------
     def save_execution_history(self):
-        if not self.var_execution_time_log.get():
+        if not self.execution_time_log:
             return
         try:
             file_path = "execution_history.csv"
@@ -959,7 +1036,7 @@ class App(tk.Frame):
 
         except Exception as e:
             msg = f"Error saving execution history: {e}"
-            self.status_bar_info.config(text=msg)
+            self.run_in_ui(self.set_statusbar, msg)
 
     # -------------------------
     # Show Error Alert
@@ -1074,6 +1151,10 @@ class App(tk.Frame):
         """
         if not text:
             return
+        self.run_in_ui(self._append_log, text, system_log)
+
+    def _append_log(self, text, system_log: bool) -> None:
+        """Appends a line to the log widget (UI thread only)."""
         msg = f"{text}\n"
         if not system_log:
             msg = msg[1:]

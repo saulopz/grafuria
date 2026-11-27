@@ -203,7 +203,7 @@ class Edge:
         self.b.change_active_edge(self, state)
         self.state = state
         if self.app.animation:  # draws if animation checkbox is true
-            self.draw()
+            self.app.mark_dirty(self)
 
     # -------------------------
     # Draw

@@ -250,7 +250,7 @@ class Vertex:
         """Changes the state of this vertex."""
         self.state = state
         if self.app.animation:
-            self.draw()
+            self.app.mark_dirty(self)
 
     # -------------------------
     # Draw

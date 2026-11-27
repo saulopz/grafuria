@@ -22,7 +22,8 @@ class VertexProxy:
         return self._vertex.get_y()
 
     def get_coords(self):
-        return self._vertex.get_coords()
+        # Model coordinates: reading the canvas is not thread-safe.
+        return self._vertex.get_x(), self._vertex.get_y()
 
     def get_state(self):
         return self._vertex.get_state()
