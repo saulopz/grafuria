@@ -62,6 +62,9 @@ $ python3 main.py --headless graph=graphs/dodecahedron.json \
 * `seed=S`: run *i* uses seed *S+i*. Without it, a random base seed is
   chosen; the seed of every run is always printed, so any run can be
   repeated.
+  For this to hold, scripts must not reseed the generator themselves
+  (no `random.seed(time.time())` or `math.randomseed(os.time())`).
+  Grafuria seeds it: randomly in the interface, with `seed=` here.
 * `log=#$`: prints script log lines with these prefixes (to stderr).
 * `NAME=VALUE`: overrides a script parameter from its `.json` file.
   Unknown names are rejected.

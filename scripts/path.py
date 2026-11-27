@@ -43,8 +43,8 @@ if begin_var == -1:
     import random
     import time
 
-    random.seed(time.time())
-    begin = app.get_vertex(random.randint(1, vertex_size))
+    # Seeded by Grafuria (see headless seed=); do not reseed here.
+    begin = app.get_vertex(random.randint(0, vertex_size - 1))  # Python indexes start at 0
 else:
     begin = app.get_vertex(begin_var)
 

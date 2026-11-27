@@ -157,7 +157,8 @@ This script implements a Breadth First Search (BFS) algorithm to
 find a path in a graph. It initializes a BFS instance with a
 random starting and random destination vertex.
 """
-random.seed(time.time())
+# The random generator is seeded by Grafuria (random in the interface,
+# fixed by seed= in headless mode). Do not reseed here.
 vertex_size = app.get_vertex_size()
 orig = random.randint(0, vertex_size-1)
 dest = random.randint(0, vertex_size-1)

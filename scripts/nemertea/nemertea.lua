@@ -166,7 +166,7 @@ end
 -- Nemertea initialization
 -- =========================
 
--- Initializes the random number generator seed
-math.randomseed(os.time())
+-- The random generator is seeded by Grafuria (random in the interface,
+-- fixed by seed= in headless mode). Do not reseed here.
 path_size = nemertea()
 evaluate(path_size)

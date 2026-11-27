@@ -225,6 +225,7 @@ def evaluate(path_size):
 
 # Inicialização do algoritmo
 
-random.seed(time.time())
+# The random generator is seeded by Grafuria (random in the interface,
+# fixed by seed= in headless mode). Do not reseed here.
 path_size = nemertea()
 evaluate(path_size)

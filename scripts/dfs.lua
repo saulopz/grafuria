@@ -116,8 +116,8 @@ end
 
 --- Function main
 local function main()
-    -- Initializes the random number generator seed
-    math.randomseed(os.time())
+    -- The random generator is seeded by Grafuria (random in the interface,
+    -- fixed by seed= in headless mode). Do not reseed here.
     local vertex_size = app:get_vertex_size()
     local orig = math.random(1, vertex_size)
     local dest = math.random(1, vertex_size)

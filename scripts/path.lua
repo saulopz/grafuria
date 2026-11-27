@@ -28,7 +28,8 @@ function main()
     local vertex_size = app:get_vertex_size()
     local begin = nil
     if app:get_var("begin") == -1 then
-        math.randomseed(os.time())
+        -- The random generator is seeded by Grafuria (random in the interface,
+        -- fixed by seed= in headless mode). Do not reseed here.
         begin = app:get_vertex(math.random(1, vertex_size))
     else
         begin = app:get_vertex(app:get_var("begin"))
