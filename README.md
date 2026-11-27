@@ -233,16 +233,32 @@ For questions or contributions, feel free to contact the author. Happy graphing!
 
 ### Code Structure
 
-| Module | Role |
-| --- | --- |
-| `graph.py` | Graph model (`Graph`, `Vertex`, `Edge`) and JSON files. No interface code. |
-| `scripting.py` | Lua/Python execution and the proxies seen by scripts. |
-| `headless.py` | Batch runs without interface. |
-| `app.py`, `vertex_view.py`, `edge_view.py`, `properties.py`, `about.py` | Tkinter interface. |
+```
+main.py, grafuria         launchers (also: PYTHONPATH=src python3 -m grafuria)
+src/grafuria/
+├── cli.py                command line: interface or --headless
+├── core/                 no interface code (tested without a display)
+│   ├── graph.py          Graph, Vertex, Edge and JSON files
+│   ├── scripting.py      Lua/Python execution and the proxies seen by scripts
+│   ├── headless.py       batch runs
+│   ├── settings.py       settings.json
+│   ├── history.py        execution_history.csv
+│   └── state.py          State values
+└── tkui/                 Tkinter interface
+    ├── app.py            main window: connects the pieces below
+    ├── sidebar.py        buttons, options, script parameters, selection details
+    ├── runner.py         play / pause / stop / speed (the script host)
+    ├── bridge.py         thread-safe queue between the script and Tkinter
+    ├── log_panel.py      log and status bar
+    ├── vertex_view.py, edge_view.py, properties.py, about.py, theme.py
+    └── icons/
+graphs/, scripts/         graphs and algorithms
+tests/                    python3 -m unittest discover -s tests
+```
 
-The interface observes the model: scripts run in a separate thread and
-only change the model; the interface redraws changed elements in its
-own thread.
+Scripts run in a separate thread and only change the model; the
+interface redraws changed elements in its own thread. Another
+interface (Qt, web) would reuse `core/` unchanged.
 
 ### Tests
 

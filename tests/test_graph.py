@@ -9,10 +9,10 @@ import tempfile
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from graph import Graph  # noqa: E402
-from state import State  # noqa: E402
+from grafuria.core.graph import Graph  # noqa: E402
+from grafuria.core.state import State  # noqa: E402
 
 
 def triangle() -> Graph:
@@ -127,8 +127,9 @@ class TestCoreHasNoInterface(unittest.TestCase):
     def test_core_modules_do_not_import_tkinter(self):
         code = (
             "import sys; sys.path.insert(0, %r);"
-            "import graph, scripting, headless, state;"
-            "assert 'tkinter' not in sys.modules, 'tkinter imported'" % ROOT
+            "import grafuria.core.graph, grafuria.core.scripting, grafuria.core.headless,"
+            " grafuria.core.state, grafuria.core.settings, grafuria.core.history;"
+            "assert 'tkinter' not in sys.modules, 'tkinter imported'" % os.path.join(ROOT, "src")
         )
         result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)

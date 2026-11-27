@@ -30,3 +30,6 @@ teste/
 
 # Include the tests folder
 !tests/
+
+# Include the source package
+!src/

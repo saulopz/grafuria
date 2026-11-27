@@ -4,7 +4,7 @@ from tkinter import Toplevel, Label, Button
 
 
 class About:
-    def __init__(self, app):
+    def __init__(self, app, version: str):
         self.dialog = Toplevel(app)
         self.dialog.title("About")
         self.dialog.geometry("500x400")
@@ -21,7 +21,7 @@ class About:
 
         Label(
             self.dialog,
-            text="Version 1.0",
+            text=f"Version {version}",
             font=("Arial", 10),
         ).pack()
 

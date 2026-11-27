@@ -15,7 +15,7 @@ import json
 import random
 from typing import Callable, Dict, List, Optional
 
-from state import State
+from .state import State
 
 
 # -------------------------

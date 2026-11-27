@@ -20,8 +20,8 @@ import os
 import random
 from typing import Optional
 
-from graph import Graph, Vertex, Edge
-from state import State
+from .graph import Graph, Vertex, Edge
+from .state import State
 
 LUA = "lua"
 PYTHON = "python"

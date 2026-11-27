@@ -2,8 +2,9 @@
 
 import tkinter as tk
 
-from graph import Vertex
-from state import State
+from ..core.graph import Vertex
+from ..core.state import State
+from . import theme
 
 
 class VertexView:
@@ -28,7 +29,7 @@ class VertexView:
         self.canvas_id = self.canvas.create_oval(
             model.x - r, model.y - r, model.x + r, model.y + r,
             width=VertexView.width,
-            fill=self.app.COLOR_NONE,
+            fill=theme.NONE,
             tags="vertex",
         )
         self.text_id = self.canvas.create_text(
@@ -63,20 +64,20 @@ class VertexView:
     def draw(self) -> None:
         """Updates the colour according to the model state."""
         colors = {
-            State.NONE: self.app.COLOR_NONE,
-            State.TESTING: self.app.COLOR_OVER,
-            State.ACTIVE: self.app.COLOR_SELECTED,
-            State.INVALID: self.app.COLOR_INVALID,
+            State.NONE: theme.NONE,
+            State.TESTING: theme.OVER,
+            State.ACTIVE: theme.SELECTED,
+            State.INVALID: theme.INVALID,
         }
         color = colors.get(self.model.state)
         if color is not None:
             self.canvas.itemconfig(self.canvas_id, fill=color)
 
     def select(self) -> None:
-        self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_SELECTED)
+        self.canvas.itemconfig(self.canvas_id, fill=theme.SELECTED)
 
     def unselect(self) -> None:
-        self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_NONE)
+        self.canvas.itemconfig(self.canvas_id, fill=theme.NONE)
 
     def destroy(self) -> None:
         """Removes the canvas items (the model is removed by the App)."""
@@ -90,7 +91,7 @@ class VertexView:
     def mouse_enter(self, event: tk.Event) -> None:
         if not self.app.editing or self.app.selected is self:
             return
-        self.canvas.itemconfig(self.canvas_id, fill=self.app.COLOR_OVER)
+        self.canvas.itemconfig(self.canvas_id, fill=theme.OVER)
 
     def mouse_leave(self, event: tk.Event) -> None:
         if not self.app.editing:
@@ -123,21 +124,11 @@ class VertexView:
                 self.model.set_state(toggled)
                 self.app.draw()
                 return
-            self.app.set_statusbar(f"Vertex: {self.id}")
+            self.app.status.set(f"Vertex: {self.id}")
             return
-        self.app.clear_selection()
-        self.select()
-        self.app.selected = self
         self._drag_x = self.canvas.canvasx(event.x)
         self._drag_y = self.canvas.canvasy(event.y)
-        self.app.set_statusbar(f"Vertex selected: {self.id}")
-        self.app.vertex_id.config(state="normal")
-        self.app.vertex_id.delete(0, tk.END)
-        self.app.vertex_id.insert(0, self.id)
-        self.app.vertex_id.config(state="readonly")
-        self.app.vertex_name.delete(0, tk.END)
-        self.app.vertex_name.insert(0, self.model.name)
-        self.app.show_config_frame(self.app.vertex_config_frame)
+        self.app.select_vertex(self)
 
     def connect(self, event: tk.Event) -> None:
         """Right click: connects the selected vertex to this one."""

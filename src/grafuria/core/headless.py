@@ -27,8 +27,8 @@ import sys
 import time
 from typing import Optional
 
-from graph import Graph
-from scripting import load_script_parameters, run_script
+from .graph import Graph
+from .scripting import load_script_parameters, run_script
 
 
 class HeadlessHost:

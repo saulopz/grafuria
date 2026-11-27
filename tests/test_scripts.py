@@ -11,10 +11,10 @@ import sys
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, ROOT)
+sys.path.insert(0, os.path.join(ROOT, "src"))
 
-from headless import load_script_parameters, run_once  # noqa: E402
-from state import State  # noqa: E402
+from grafuria.core.headless import load_script_parameters, run_once  # noqa: E402
+from grafuria.core.state import State  # noqa: E402
 
 try:
     import lupa  # noqa: F401
