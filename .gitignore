@@ -27,3 +27,6 @@ __pycache__/
 .git/
 .idea/
 teste/
+
+# Include the tests folder
+!tests/

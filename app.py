@@ -6,17 +6,19 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import asksaveasfile, askopenfilename
 from PIL import Image, ImageTk
-from vertex import Vertex, Edge
+from graph import Graph
+from vertex_view import VertexView
+from edge_view import EdgeView
+import scripting
+import gc
 import json
 import queue
 import sys
 import threading
 import time
 import webbrowser
-from state import State, ScriptType
+from state import State
 from about import About
-from lupa import LuaRuntime
-from app_proxy import AppProxy
 from properties import Properties
 
 
@@ -59,7 +61,6 @@ class App(tk.Frame):
         """
         super().__init__(master)
         self.script = script_lua
-        self.script_type = ScriptType.NONE
         self.script_properties = None
         self.script_properties_frame = None
         self.config_file = "settings.json"
@@ -70,14 +71,10 @@ class App(tk.Frame):
         self.var_show_weight = tk.BooleanVar(value=True)
         self.var_animation = tk.BooleanVar(value=True)
         self.var_execution_time_log = tk.BooleanVar(value=True)
+        self.graph = self._new_graph(Graph())
         self.load_configuration()
-        self.bidirectional = False
         self.execution_time = 0
         self.solved = False
-        self.vertex: list[Vertex] = []
-        self.vertex_dict = {}
-        self.edge: list[Edge] = []
-        self.edge_dict = {}
         self.area = []
         self.master = master
         self.scale = 1.0
@@ -106,7 +103,13 @@ class App(tk.Frame):
             )
             name = os.path.splitext(os.path.basename(self.script))[0]
             self.script_label.config(text=name)
-        self.after(App.UI_PUMP_MS, self._pump_ui)
+        self._pump_id = self.after(App.UI_PUMP_MS, self._pump_ui)
+
+    def destroy(self) -> None:
+        """Stops the UI pump before the widgets are destroyed."""
+        self.stopped = True
+        self.after_cancel(self._pump_id)
+        super().destroy()
 
     # -------------------------
     # UI Thread Bridge
@@ -157,14 +160,65 @@ class App(tk.Frame):
                 element.draw()
             except Exception as e:
                 print(f"[grafuria] redraw error: {e}", file=sys.stderr)
-        self.after(App.UI_PUMP_MS, self._pump_ui)
+        self._pump_id = self.after(App.UI_PUMP_MS, self._pump_ui)
 
     # -------------------------
-    # Get Vertex Size
+    # Graph Model and Views
     # -------------------------
-    def get_vertex_size(self):
-        """Returns how many vertices there are in the graph's vertex list."""
-        return len(self.vertex)
+    def _new_graph(self, graph: Graph) -> Graph:
+        """Starts observing a graph model."""
+        graph.listener = self._on_model_change
+        return graph
+
+    @property
+    def bidirectional(self) -> bool:
+        return self.graph.bidirectional
+
+    @bidirectional.setter
+    def bidirectional(self, value: bool) -> None:
+        self.graph.bidirectional = value
+
+    @property
+    def vertex(self) -> list:
+        """Views of the vertices, in model order."""
+        return [v.view for v in self.graph.vertex]
+
+    @property
+    def edge(self) -> list:
+        """Views of the edges, in model order."""
+        return [e.view for e in self.graph.edge]
+
+    def _on_model_change(self, element) -> None:
+        """Called by the model (any thread) when a state changes."""
+        if self.animation and element.view is not None:
+            self.mark_dirty(element.view)
+
+    def create_vertex(self, name: str, x: float, y: float) -> VertexView:
+        return VertexView(self, self.graph.add_vertex(name, x, y))
+
+    def create_edge(self, a, b, weight: float = 1) -> EdgeView:
+        view = EdgeView(self, self.graph.add_edge(a, b, weight))
+        self.canvas.tag_raise("vertex")
+        self.canvas.tag_raise("text")
+        return view
+
+    def delete_vertex(self, view: VertexView) -> None:
+        for edge in list(view.model.edge):
+            self.delete_edge(edge.view)
+        self.graph.remove_vertex(view.model)
+        view.destroy()
+
+    def delete_edge(self, view: EdgeView) -> None:
+        self.graph.remove_edge(view.model)
+        view.destroy()
+
+    def clear_selection(self) -> None:
+        if self.selected is not None:
+            self.selected.unselect()
+            self.selected = None
+        if self.selected_edge is not None:
+            self.selected_edge.unselect()
+            self.selected_edge = None
 
     # -------------------------
     # Get Speed
@@ -186,41 +240,6 @@ class App(tk.Frame):
     def set_solved(self, solved):
         """Inform application if algorithm solved graph or not."""
         self.solved = solved
-
-    # -------------------------
-    # Get Vertex
-    # -------------------------
-    def get_vertex(self, index):
-        """
-        Returns a specific vertex from graph vertices.
-
-        Parameters
-        ----------
-        index: int
-            Position of vertex on vertex list.
-        """
-        if index < 0 or index >= self.get_vertex_size():
-            return None
-        return self.vertex[index]
-
-    # -------------------------
-    # Get Vertex By ID
-    # -------------------------
-    def get_vertex_by_id(self, vertex_id) -> Vertex | None:
-        """
-        Returns a vertex by its ID.
-
-        Parameters
-        ----------
-        vertex_id: str
-            ID of the vertex to be retrieved.
-
-        Returns
-        -------
-        Vertex | None
-            The vertex with the specified ID, or None if not found.
-        """
-        return self.vertex_dict.get(vertex_id, None)
 
     # -------------------------
     # Area Add
@@ -655,8 +674,7 @@ class App(tk.Frame):
         """
         name = self.vertex_name.get()
         if self.selected:
-            self.selected.name = name
-            self.canvas.itemconfig(self.selected.text_id, text=name)
+            self.selected.set_name(name)
 
     # -------------------------
     # Open Documentation Dialog
@@ -778,8 +796,7 @@ class App(tk.Frame):
         weight = self.edge_weight.get()
         try:
             if self.selected_edge:
-                self.selected_edge.weight = float(weight)
-                self.canvas.itemconfig(self.selected_edge.text_id, text=weight)
+                self.selected_edge.set_weight(float(weight), weight)
         except ValueError:
             print("Invalid value, ignoring update.")
 
@@ -792,35 +809,8 @@ class App(tk.Frame):
         it is necessary to recreate the edges on the canvas.
         """
         self.bidirectional = self.var_bidirectional.get()
-        # Redraw all edges
         for e in self.edge:
-            ax, ay = e.a.get_coords()
-            bx, by = e.b.get_coords()
-
-            # Removes current edge from canvas
-            self.canvas.delete(e.canvas_id)
-
-            # Redraw edge with or without arrows
-            if self.bidirectional:
-                e.canvas_id = self.canvas.create_line(
-                    ax, ay, bx, by, width=2, fill=self.COLOR_NONE, tags="edge"
-                )
-            else:
-                e.canvas_id = self.canvas.create_line(
-                    ax,
-                    ay,
-                    bx,
-                    by,
-                    arrow="last",
-                    arrowshape=(
-                        10 * self.scale,
-                        10 * self.scale,
-                        5 * self.scale,
-                    ),
-                    width=2,
-                    fill=self.COLOR_NONE,
-                    tags="edge",
-                )
+            e.rebuild_line()
         self.draw()
 
     # -------------------------
@@ -864,82 +854,30 @@ class App(tk.Frame):
         self.editing = False
         self.debug = False
 
-        if self.selected is not None:
-            self.selected.unselect()
-        if self.selected_edge is not None:
-            self.selected_edge.unselect()
+        self.clear_selection()
         self.stopped = False
         # Snapshot the script parameters here, in the UI thread: the
         # script reads plain values and never touches Tk variables.
         self._script_vars = self._snapshot_script_vars()
 
-        # For now python too ------------------------
-        def _run_script():
-            ext = os.path.splitext(self.script)[1].lower()
-            try:
-                if ext == ".lua":
-                    self.script_type = ScriptType.LUA
-                    self.lua_execute()
-                elif ext == ".py":
-                    self.script_type = ScriptType.PYTHON
-                    self.python_execute()
-                else:
-                    self.log(f"Unsupported script extension: {ext}", True)
-            except Exception as e:
-                self.log(f"Error executing script: {e}", True)
+        # Collect garbage now, in the UI thread. Otherwise the collector
+        # may run inside the script thread and finalize discarded Tk
+        # variables there, which calls Tcl from the wrong thread.
+        gc.collect()
 
-        # --------------------------------------
-
-        a = threading.Thread(target=_run_script)
-
-        # a = Thread(target=self.lua_execute)
-        a.daemon = True
+        a = threading.Thread(target=self._execute_script, daemon=True)
         a.start()
 
     # -------------------------
-    # Lua Execute
+    # Execute Script
     # -------------------------
-    def lua_execute(self):
-        """Executes a script lua if loaded"""
-        self.init_dicts()
+    def _execute_script(self) -> None:
+        """Runs the loaded script over the graph (script thread)."""
         try:
-            lua = LuaRuntime(unpack_returned_tuples=True)  # type: ignore
-            app_proxy = AppProxy(self)
-            lua.globals().State = {
-                "NONE": State.NONE,
-                "TESTING": State.TESTING,
-                "ACTIVE": State.ACTIVE,
-                "INVALID": State.INVALID,
-            }
-            lua.globals().app = app_proxy
-            with open(self.script, "r") as file:
-                lua_script = file.read()
-            lua.execute(lua_script)
+            scripting.run_script(self.script, self.graph, host=self)
             self.save_execution_history()
         except Exception as e:
-            self.log(str(e), True)
-        self.run_in_ui(self._on_script_finished)
-
-    # -------------------------
-    # Python Execute
-    # -------------------------
-    def python_execute(self):
-        """Run a Python script."""
-        self.init_dicts()
-        try:
-            app_proxy = AppProxy(self)
-            exec_globals = {
-                "app": app_proxy,
-                # Same State values used internally and by Lua scripts.
-                # Scripts must NOT redefine State.
-                "State": State,
-            }
-            with open(self.script, "r") as file:
-                python_script = file.read()
-            exec(python_script, exec_globals)
-            self.save_execution_history()
-        except Exception as e:
-            self.log(f"[Python script error] {e}", True)
+            self.log(f"[Script error] {e}", True)
         self.run_in_ui(self._on_script_finished)
 
     # -------------------------
@@ -955,24 +893,6 @@ class App(tk.Frame):
             self.draw()
 
     # -------------------------
-    # Init Dicts
-    # -------------------------
-    def init_dicts(self):
-        self.clear_dicts()
-        for vertex in self.vertex:
-            self.vertex_dict[vertex.get_id()] = vertex
-
-        for edge in self.edge:
-            self.edge_dict[edge.get_id()] = edge
-
-    # -------------------------
-    # Clear Dicts
-    # -------------------------
-    def clear_dicts(self):
-        self.vertex_dict.clear()
-        self.edge_dict.clear()
-
-    # -------------------------
     # Get Var
     # -------------------------
     def get_var(self, var_name):
@@ -985,7 +905,7 @@ class App(tk.Frame):
     def _snapshot_script_vars(self) -> dict:
         """Copies script parameters to a plain dict (UI thread only)."""
         if not self.script_properties:
-            return {}
+            return scripting.load_script_parameters(self.script)
         props = self.script_properties
         return {name: props.get_attr(name) for name in props.attr}
 
@@ -1090,11 +1010,7 @@ class App(tk.Frame):
         self.canvas.configure(bg=App.COLOR_BG)
         self.editing = True
         self.debug = False
-        for v in self.vertex:
-            v.set_state(State.NONE)
-            # v.active_edges = 0
-        for e in self.edge:
-            e.set_state(State.NONE)
+        self.graph.reset_states()
         self.canvas.delete("area")
         self.draw()
 
@@ -1183,7 +1099,7 @@ class App(tk.Frame):
             return
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
-        self.vertex.append(Vertex("", x, y, self))
+        self.create_vertex("", x, y)
 
     # -------------------------
     # Delete Canvas Object
@@ -1193,10 +1109,10 @@ class App(tk.Frame):
         if not self.editing:
             return
         if self.selected is not None:
-            self.selected.delete()
+            self.delete_vertex(self.selected)
             self.selected = None
         if self.selected_edge is not None:
-            self.selected_edge.delete()
+            self.delete_edge(self.selected_edge)
             self.selected_edge = None
 
     # -------------------------
@@ -1210,34 +1126,9 @@ class App(tk.Frame):
     # Get Graph
     # -------------------------
     def get_graph(self) -> str:
-        # 1. Mapeia ID antigo -> Novo ID (0, 1, 2...)
-        v_map = {v.id: i for i, v in enumerate(self.vertex)}
-
-        # 2. Gera a lista de JSON de vértices com IDs novos
-        vertex_json: list[dict] = []
-        for i, v in enumerate(self.vertex):
-            v_data = v.get_json()
-            v_data["id"] = i  # Reindexa apenas aqui no dicionário temporário
-            vertex_json.append(v_data)
-
-        # 3. Gera a lista de JSON de arestas traduzindo as conexões
-        edge_json: list[dict] = []
-        for i, e in enumerate(self.edge):
-            e_data = e.get_json()
-            e_data["id"] = i
-            # Traduzimos a referência usando o mapa, mas sem alterar e.a original
-            e_data["a"] = v_map[e.a.id]
-            e_data["b"] = v_map[e.b.id]
-            edge_json.append(e_data)
-
+        """Returns the graph as JSON (ids renumbered 0..n-1)."""
         self.log(f"$bidirectional {self.bidirectional} (reindexed for benchmark)")
-
-        obj = {
-            "bidirectional": self.bidirectional,
-            "vertex": vertex_json,
-            "edge": edge_json,
-        }
-        return json.dumps(obj)
+        return json.dumps(self.graph.to_dict())
 
     # -------------------------
     # Save Graph File Dialog
@@ -1350,38 +1241,19 @@ class App(tk.Frame):
             Name and path of graph file in format JSON.
         """
         try:
+            graph = Graph.load(filename)
+            graph.shuffle_edges()
             self.filename = filename
-            f = open(filename)
-            data = json.load(f)
-            f.close()
             self.canvas.delete("all")
-            self.bidirectional = data.get("bidirectional", True)
-            self.var_bidirectional.set(self.bidirectional)
-            for v in data["vertex"]:
-                self.vertex.append(
-                    Vertex(v.get("name", ""), v["x"], v["y"], self, v["id"])
-                )
-            for e in data["edge"]:
-                a = None
-                b = None
-                for v in self.vertex:
-                    if e["a"] == v.id:
-                        a = v
-                    if e["b"] == v.id:
-                        b = v
-                    if a is not None and b is not None:
-                        break
-                weight = e.get("weight", 1)
-                edge = Edge(a, b, weight, self, id=e["id"])
-                self.edge.append(edge)
-                a.edge.append(edge)
-                b.edge.append(edge)
-                a.neighbor[b.get_id()] = edge
-                b.neighbor[a.get_id()] = edge
+            self.graph = self._new_graph(graph)
+            self.var_bidirectional.set(graph.bidirectional)
+            for v in graph.vertex:
+                VertexView(self, v)
+            for e in graph.edge:
+                EdgeView(self, e)
+            self.canvas.tag_raise("vertex")
+            self.canvas.tag_raise("text")
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-
-            for v in self.vertex:
-                v.shuffle_edges()
 
             name = os.path.splitext(os.path.basename(self.filename))[0]
             self.master.title(f"{self.title} : {name}")
@@ -1439,14 +1311,11 @@ class App(tk.Frame):
     # -------------------------
     def reset_canvas(self) -> None:
         """Reset canvas to create a new graph."""
-        self.clear_dicts()
         self.clear_log()
         self.event_clear()
         self.filename = ""
         self.master.title(f"{self.title}")
-        self.vertex.clear()
-        Vertex.id = 0
-        self.edge.clear()
-        Edge.id = 0
+        self.clear_selection()
+        self.graph = self._new_graph(Graph(self.var_bidirectional.get()))
         self.canvas.delete("all")
         self.graph_label.config(text="Click here.")

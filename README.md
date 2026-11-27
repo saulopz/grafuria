@@ -48,6 +48,24 @@ $ ./grafuria graph=... script=...
 
 Both parameters are optional. If omitted, the interface will start with an empty canvas.
 
+### Headless Mode (batch experiments)
+
+Scripts can run without the interface, many times, with reproducible
+seeds. The output is tab-separated, one line per run:
+
+```sh
+$ python3 main.py --headless graph=graphs/dodecahedron.json \
+      script=scripts/nemertea/nemertea.lua runs=100 seed=42 deep=9 > results.tsv
+```
+
+* `runs=N`: number of executions (default 1).
+* `seed=S`: run *i* uses seed *S+i*. Without it, a random base seed is
+  chosen; the seed of every run is always printed, so any run can be
+  repeated.
+* `log=#$`: prints script log lines with these prefixes (to stderr).
+* `NAME=VALUE`: overrides a script parameter from its `.json` file.
+  Unknown names are rejected.
+
 ### Using the Interface
 
 Within the graphical interface, you can:
@@ -208,3 +226,29 @@ These scripts randomly choose two vertices and find paths using different strate
 ---
 
 For questions or contributions, feel free to contact the author. Happy graphing!
+
+---
+
+## Development
+
+### Code Structure
+
+| Module | Role |
+| --- | --- |
+| `graph.py` | Graph model (`Graph`, `Vertex`, `Edge`) and JSON files. No interface code. |
+| `scripting.py` | Lua/Python execution and the proxies seen by scripts. |
+| `headless.py` | Batch runs without interface. |
+| `app.py`, `vertex_view.py`, `edge_view.py`, `properties.py`, `about.py` | Tkinter interface. |
+
+The interface observes the model: scripts run in a separate thread and
+only change the model; the interface redraws changed elements in its
+own thread.
+
+### Tests
+
+```sh
+$ python3 -m unittest discover -s tests
+```
+
+Interface tests need a display; on a server use `xvfb-run -a` before the command.
+

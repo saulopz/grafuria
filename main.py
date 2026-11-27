@@ -23,6 +23,9 @@ behavior.
 Usage:
     python3 main.py graph=graphs/dodecahedron.json script=scripts/bfs.lua
 
+    Without interface (batch experiments, see headless.py):
+    python3 main.py --headless graph=... script=... runs=100 seed=42
+
 Note:
     - The 'graph' parameter specifies the graph file (optional).
     - The 'script' parameter specifies the algorithm script (optional).
@@ -35,25 +38,37 @@ License.
 
 import os
 import sys
-from app import App
-import tkinter as tk
+
+
+def resolve_paths(args: list) -> list:
+    """
+    Makes graph= and script= absolute. Paths given by the user are
+    relative to where they called the program; after that we work from
+    the project folder, so settings.json and dofile("scripts/...")
+    always resolve.
+    """
+    resolved = []
+    for arg in args:
+        key, sep, value = arg.partition("=")
+        if sep and key in ("graph", "script") and value:
+            arg = f"{key}={os.path.abspath(value)}"
+        resolved.append(arg)
+    return resolved
 
 
 # -------------------------
 # Main
 # -------------------------
-def main():
-    """
-    gets arguments if exists and start the graphic interface.
+def main() -> int:
+    """Reads the arguments and starts the interface or the headless mode."""
+    args = resolve_paths(sys.argv[1:])
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-    Arguments
-    ---------
-    graph: str
-        graph path and filename.
-    script: str
-        script path and filename.
-    """
-    args = sys.argv[1:]
+    if "--headless" in args:
+        import headless  # no Tkinter needed
+
+        return headless.main([a for a in args if a != "--headless"])
+
     graph: str = ""
     script: str = ""
     for arg in args:
@@ -62,19 +77,14 @@ def main():
         elif arg.startswith("script="):
             script = arg.split("=", 1)[1]
 
-    # Paths given by the user are relative to where they called the
-    # program. Resolve them first, then work from the project folder,
-    # so settings.json and dofile("scripts/...") always resolve.
-    if graph:
-        graph = os.path.abspath(graph)
-    if script:
-        script = os.path.abspath(script)
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    import tkinter as tk
+    from app import App
 
     root = tk.Tk()
     app: App = App(master=root, filename=graph, script_lua=script)
     app.mainloop()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
