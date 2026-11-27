@@ -15,7 +15,7 @@ Version: 1.0
 
 It allows users to easily construct directed and undirected graphs, assign weights to edges, and execute dynamic algorithms that interact with the graph in real time. Lua is used as the scripting language, and a subset of the API is also available in Python for reference.
 
-![Screenshot](res/screenshot_001.png)
+![Grafuria web interface solving the dodecahedron](docs/img/solved.png)
 
 ---
 

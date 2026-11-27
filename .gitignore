@@ -19,8 +19,6 @@ scripts/*/
 !scripts/nemertea/
 !scripts/tutorial/
 
-# Include the 'res' subfolder and all its files and subdirectories
-!res/
 
 # Ignore the __pycache__ folder and its contents
 __pycache__/
